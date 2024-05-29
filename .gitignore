@@ -1,0 +1,6 @@
+# cache directories and files
+.qmake.stash
+
+# build
+out/**
+Makefile
