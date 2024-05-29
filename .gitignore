@@ -1,6 +1,8 @@
 # cache directories and files
+.cache/**
 .qmake.stash
 
 # build
 out/**
+compile_commands.json
 Makefile
