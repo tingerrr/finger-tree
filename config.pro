@@ -6,5 +6,5 @@ TARGET = out/main
 
 QMAKE_CXXFLAGS += -std=c++20
 
-HEADERS += src/node.hpp
+HEADERS += src/btree/node.hpp
 SOURCES += src/main.cpp

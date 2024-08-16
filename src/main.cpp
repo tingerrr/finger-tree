@@ -1,20 +1,30 @@
-#include "node.hpp"
+#include "btree/node.hpp"
 
 #include <iostream>
 #include <iterator>
 
 int main() {
-  Node<int, int, 3> n;
-  n.insert(2, 0);
-  n.insert(2, 0);
-  n.insert(3, 0);
-  n.insert(1, 0);
-  n.insert(22, 0);
+  auto n = btree::Leaf<int, int>();
+
+  n.upsert(1, 1);
+  n.upsert(2, 2);
+  n.upsert(3, 3);
+
+  n.upsert(2, 42);
+
+  std::cout << n.CHILD_MIN << "..=" << n.CHILD_MAX << " @ " << n.size() << std::endl;
 
   std::cout << "keys: ";
   std::copy(
     n.keys().begin(),
     n.keys().end(),
+    std::ostream_iterator<int>(std::cout, ", ")
+  );
+  std::cout << std::endl;
+  std::cout << "vals: ";
+  std::copy(
+    n.vals().begin(),
+    n.vals().end(),
     std::ostream_iterator<int>(std::cout, ", ")
   );
   std::cout << std::endl;
