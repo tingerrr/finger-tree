@@ -1,0 +1,61 @@
+addressSanitizer {
+    mac {
+        # enable OSX LLVM address sanitizer
+        QMAKE_CXXFLAGS *= \
+            -fsanitize=address \
+            -fno-omit-frame-pointer
+
+        QMAKE_LFLAGS *= \
+            -fsanitize=address \
+            -fno-omit-frame-pointer \
+            #-static-libsan
+    } else {
+        # enable GCC address sanitizer
+        QMAKE_CXXFLAGS *= \
+            -ggdb \
+            -fsanitize=address \
+            -fno-omit-frame-pointer \
+            -static-libstdc++ \
+            #-static-libasan \
+            -lrt
+
+        QMAKE_LFLAGS *= \
+            -ggdb \
+            -fsanitize=address \
+            -fno-omit-frame-pointer \
+            -static-libstdc++ \
+            #-static-libasan \
+            -lrt
+    }
+} else {
+    leakSanitizer {
+        mac {
+            # enable OSX LLVM address sanitizer
+            QMAKE_CXXFLAGS *= \
+                -fsanitize=leak \
+                -fno-omit-frame-pointer
+
+            QMAKE_LFLAGS *= \
+                -fsanitize=leak \
+                -fno-omit-frame-pointer \
+                #-static-libsan
+        } else {
+            # enable GCC address sanitizer
+            QMAKE_CXXFLAGS *= \
+                -ggdb \
+                -fsanitize=leak \
+                -fno-omit-frame-pointer \
+                -static-libstdc++ \
+                #-static-liblsan \
+                -lrt
+
+            QMAKE_LFLAGS *= \
+                -ggdb \
+                -fsanitize=leak \
+                -fno-omit-frame-pointer \
+                -static-libstdc++ \
+                #-static-liblsan \
+                -lrt
+        }
+    }
+}

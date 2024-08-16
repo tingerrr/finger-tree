@@ -14,6 +14,10 @@ build: qmake
 run: build
     ./out/main
 
+# run and debug the project
+debug: build
+    gdb ./out/main
+
 # force rebuild the project
 force-build: clean
     bear -- make
