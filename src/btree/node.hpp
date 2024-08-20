@@ -118,6 +118,8 @@ namespace btree {
         return std::span(this->_keys);
       }
 
+      auto index(const K& key) const -> uint;
+
       virtual auto insert(const K& key, const V& val) -> InsertResult<K, V, MAX, MIN> = 0;
       virtual auto show() -> void = 0;
 
@@ -226,12 +228,24 @@ namespace btree {
   Leaf<K, V, MAX, MIN>::Leaf(): Leaf({}, {}) {}
 
   template<typename K, typename V, uint MAX, uint MIN>
+  auto Node<K, V, MAX, MIN>::index(const K& key) const -> uint {
+    // TODO: linear scan for small factors
+
+    auto begin = this->_keys.begin();
+    auto end = this->_keys.end();
+
+    auto range = std::equal_range(begin, end, key);
+    auto idx = std::distance(begin, range.first);
+
+    return idx;
+  }
+
+  template<typename K, typename V, uint MAX, uint MIN>
   auto Deep<K, V, MAX, MIN>::insert(
     const K& key,
     const V& val
   ) -> InsertResult<K, V, MAX, MIN> {
-    auto range = std::equal_range(this->_keys.begin(), this->_keys.end(), key);
-    auto idx = std::distance(this->_keys.begin(), range.first);
+    auto idx  = this->index(key);
     auto child = this->_children[idx];
 
     // TODO: rebalance
@@ -246,16 +260,15 @@ namespace btree {
     std::vector<K> k(this->_keys.begin(), this->_keys.end());
     std::vector<V> v(this->_vals.begin(), this->_vals.end());
 
-    auto range = std::equal_range(k.begin(), k.end(), key);
-    auto idx = std::distance(k.begin(), range.first);
+    auto idx = this->index(key);
 
-    if (range.first != k.end() && *range.first == key) {
+    if (idx < k.size() && k[idx] == key) {
       k[idx] = key;
       v[idx] = val;
       auto self = Leaf(std::move(k), std::move(v));
       return result_inserted(std::move(self));
     } else {
-      k.insert(range.first, key);
+      k.insert(k.begin() + idx, key);
       v.insert(v.begin() + idx, val);
 
       if (k.size() == Node<K, V, MAX, MIN>::KV_MAX + 1) {
