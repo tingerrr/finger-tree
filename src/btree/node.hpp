@@ -347,15 +347,15 @@ namespace btree {
   auto Leaf<K, V, MAX, MIN>::show() -> void {
     std::cout << "keys: ";
     std::copy(
-      this->keys().begin(),
-      this->keys().end(),
+      this->_keys.begin(),
+      this->_keys.end(),
       std::ostream_iterator<int>(std::cout, ", ")
     );
     std::cout << std::endl;
     std::cout << "vals: ";
     std::copy(
-      this->vals().begin(),
-      this->vals().end(),
+      this->_vals.begin(),
+      this->_vals.end(),
       std::ostream_iterator<int>(std::cout, ", ")
     );
     std::cout << std::endl;
