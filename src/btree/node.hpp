@@ -252,12 +252,12 @@ namespace btree {
       k.insert(range.first, key);
       v.insert(v.begin() + idx, val);
 
-      if (this->size() == Node<K, V, MAX, MIN>::KV_MAX + 1) {
-        std::vector<K> k1(k.begin(), k.begin() + this->_keys.size() / 2);
-        std::vector<V> v1(v.begin(), v.begin() + this->_vals.size() / 2);
+      if (k.size() == Node<K, V, MAX, MIN>::KV_MAX + 1) {
+        std::vector<K> k1(k.begin(), k.begin() + k.size() / 2);
+        std::vector<V> v1(v.begin(), v.begin() + v.size() / 2);
 
-        std::vector<K> k2(k.begin() + this->_keys.size() / 2, k.end());
-        std::vector<V> v2(v.begin() + this->_vals.size() / 2, v.end());
+        std::vector<K> k2(k.begin() + k.size() / 2, k.end());
+        std::vector<V> v2(v.begin() + v.size() / 2, v.end());
 
         auto k = k1.back();
 
