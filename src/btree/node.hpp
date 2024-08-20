@@ -245,11 +245,58 @@ namespace btree {
     const K& key,
     const V& val
   ) -> InsertResult<K, V, MAX, MIN> {
-    auto idx  = this->index(key);
-    auto child = this->_children[idx];
+    std::vector<K> k(this->_keys.begin(), this->_keys.end());
+    std::vector<SharedNode<K, V, MAX, MIN>> c(
+      this->_children.begin(),
+      this->_children.end()
+    );
 
-    // TODO: rebalance
-    return child.insert(key, val);
+    auto idx  = this->index(key);
+    auto child = c[idx];
+
+    return std::visit([&c, &k, idx, this](auto&& res){
+      using T = std::decay_t<decltype(res)>;
+      if constexpr (std::is_same_v<T, Inserted<K, V, MAX, MIN>>) {
+        k[idx] = res.keys().back();
+        c[idx] = res;
+        return result_inserted(Deep(std::move(k), std::move(c)));
+      } else if constexpr (std::is_same_v<T, Split<K, V, MAX, MIN>>) {
+        auto left = std::get<0>(res);
+        auto mid = std::get<1>(res);
+        auto right = std::get<2>(res);
+
+        k.insert(k.begin() + idx, mid);
+        c.insert(c.begin() + idx, right);
+        c.insert(c.begin() + idx, left);
+
+        if (k.size() == Node<K, V, MAX, MIN>::KV_MAX + 1) {
+          std::vector<K> k1(k.begin(), k.begin() + k.size() / 2);
+          std::vector<SharedNode<K, V, MAX, MIN>> c1(
+             c.begin(),
+             c.begin() + c.size() / 2
+          );
+
+          std::vector<K> k2(k.begin() + k.size() / 2, k.end());
+          std::vector<SharedNode<K, V, MAX, MIN>> c2(
+             c.begin(),
+             c.begin() + c.size() / 2
+          );
+
+          auto mid = k1.back();
+
+          return result_split(
+            Deep(std::move(k1), std::move(c1)),
+            mid,
+            Deep(std::move(k2), std::move(c2))
+          );
+        } else {
+          return result_inserted(Deep(std::move(k), std::move(c)));
+        }
+
+      } else {
+        static_assert(false, "non-exhaustive visitor");
+      }
+    }, child.insert(key, val));
   }
 
   template<typename K, typename V, uint MAX, uint MIN>
