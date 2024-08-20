@@ -47,25 +47,31 @@ namespace btree {
     Inserted<K, V, MAX, MIN>
   >;
 
-  template<typename K, typename V, uint MAX, uint MIN>
-  static auto result_inserted(
-    Leaf<K, V, MAX, MIN>&& node
-  ) -> InsertResult<K, V, MAX, MIN> {
-    return std::static_pointer_cast<Node<K, V, MAX, MIN>>(
-      std::make_shared<Leaf<K, V, MAX, MIN>>(node)
-    );
+  template<typename N>
+  static auto result_inserted(N&& node) -> InsertResult<
+    typename N::KeyType, typename N::ValueType, N::CHILD_MAX, N::CHILD_MIN
+  > {
+    return std::static_pointer_cast<Node<
+      typename N::KeyType, typename N::ValueType, N::CHILD_MAX, N::CHILD_MIN
+    >>(std::make_shared<N>(node));
   }
 
-  template<typename K, typename V, uint MAX, uint MIN>
+  template<typename N>
   static auto result_split(
-    Leaf<K, V, MAX, MIN>&& left,
-    K key,
-    Leaf<K, V, MAX, MIN>&& right
-  ) -> InsertResult<K, V, MAX, MIN> {
+    N&& left,
+    typename N::KeyType key,
+    N&& right
+  ) -> InsertResult<
+    typename N::KeyType, typename N::ValueType, N::CHILD_MAX, N::CHILD_MIN
+  > {
     return std::tuple(
-      std::static_pointer_cast<Node<K, V, MAX, MIN>>(std::make_shared<Leaf<K, V, MAX, MIN>>(left)),
+      std::static_pointer_cast<Node<
+        typename N::KeyType, typename N::ValueType, N::CHILD_MAX, N::CHILD_MIN
+      >>(std::make_shared<N>(left)),
       key,
-      std::static_pointer_cast<Node<K, V, MAX, MIN>>(std::make_shared<Leaf<K, V, MAX, MIN>>(right))
+      std::static_pointer_cast<Node<
+        typename N::KeyType, typename N::ValueType, N::CHILD_MAX, N::CHILD_MIN
+      >>(std::make_shared<N>(right))
     );
   }
 
@@ -247,7 +253,7 @@ namespace btree {
       k[idx] = key;
       v[idx] = val;
       auto self = Leaf(std::move(k), std::move(v));
-      return result_inserted<K, V, MAX, MIN>(std::move(self));
+      return result_inserted(std::move(self));
     } else {
       k.insert(range.first, key);
       v.insert(v.begin() + idx, val);
@@ -267,7 +273,7 @@ namespace btree {
         return result_split(std::move(left), k, std::move(right));
       } else {
         auto self = Leaf(std::move(k), std::move(v));
-        return result_inserted<K, V, MAX, MIN>(std::move(self));
+        return result_inserted(std::move(self));
       }
     }
   }
