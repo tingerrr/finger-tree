@@ -1,47 +1,59 @@
 #include "btree/node.hpp"
 
 #include <iostream>
-#include <memory>
-#include <type_traits>
-#include <variant>
+#include <string>
+
+template<typename K, typename V, uint N>
+auto show(btree::Node<K, V, N>& node, int indent) -> void {
+  auto istr = std::string();
+
+  for (auto i = 0; i < indent; i++) {
+    istr += "|   ";
+  }
+
+  if (node.is_leaf()) {
+    auto leaf = static_cast<btree::Leaf<K, V, N>&>(node);
+
+    std::cout << istr << "Leaf" << std::endl;
+    std::cout << istr << "k: ";
+    std::copy(
+      leaf.keys().begin(),
+      leaf.keys().end(),
+      std::ostream_iterator<int>(std::cout, ", ")
+    );
+    std::cout << std::endl << istr << "v: ";
+    std::copy(
+      leaf.vals().begin(),
+      leaf.vals().end(),
+      std::ostream_iterator<int>(std::cout, ", ")
+    );
+    std::cout << std::endl;
+  } else {
+    auto deep = static_cast<btree::Deep<K, V, N>&>(node);
+
+    std::cout << istr << "The Deep" << std::endl;
+    std::cout << istr << "k: ";
+    std::copy(
+      deep.keys().begin(),
+      deep.keys().end(),
+      std::ostream_iterator<int>(std::cout, ", ")
+    );
+    std::cout << std::endl;
+
+    for (auto& child : deep.children()) {
+      show(*child, indent + 1);
+    }
+  }
+}
 
 int main() {
-  auto visitor = [](auto&& arg){
-    using T = std::decay_t<decltype(arg)>;
-    if constexpr (std::is_same_v<T, btree::Inserted<int, int, 3, 2>>) {
-      arg->show();
-      return arg;
-    } else if constexpr (std::is_same_v<T, btree::Split<int, int, 3, 2>>) {
-      std::cout << "left" << std::endl;
-      std::get<0>(arg)->show();
-      std::cout << "k: " << std::get<1>(arg) << std::endl;
-      std::cout << "right" << std::endl;
-      std::get<2>(arg)->show();
-      return std::get<0>(arg);
-    } else {
-      static_assert(false, "non-exhaustive visitor");
-    }
-  };
+  auto r = btree::BTree<int, int, 3>();
 
-  auto n = std::static_pointer_cast<btree::Node<int, int, 3>>(
-    std::make_shared<btree::Leaf<int, int, 3>>()
-  );
-  n->show();
+  for (auto i = 0; i < 4; i++) {
+    r = r.insert(i, i);
+  }
 
-  std::cout << "1 -> 1" << std::endl;
-  n = std::visit(visitor, n->insert(1, 1));
-
-  std::cout << "2 -> 2" << std::endl;
-  n = std::visit(visitor, n->insert(2, 2));
-
-  std::cout << "3 -> 3" << std::endl;
-  n = std::visit(visitor, n->insert(3, 3));
-
-  std::cout << "2 -> 42" << std::endl;
-  n = std::visit(visitor, n->insert(2, 42));
-
-  std::cout << "4 -> 1" << std::endl;
-  n = std::visit(visitor, n->insert(4, 1));
+  show(r.root(), 0);
 
   return 0;
 }
