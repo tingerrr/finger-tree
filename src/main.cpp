@@ -1,4 +1,5 @@
 #include "btree.hpp"
+#include "src/btree/node/core.hpp"
 
 int main() {
   auto r = btree::BTree<int, int, 3>();
@@ -7,7 +8,7 @@ int main() {
     r = r.insert(i, i);
   }
 
-  btree::show(r.root(), 0);
+  btree::node::show(r.root(), 0);
 
   return 0;
 }
