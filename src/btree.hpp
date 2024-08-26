@@ -4,6 +4,7 @@
 #include "btree/node/base.hpp"
 #include "btree/node/deep.hpp"
 #include "btree/node/leaf.hpp"
+#include "btree/node/core.hpp"
 
 namespace btree {
   template<typename K, typename V, uint N = node::ORDER_DEFAULT>
@@ -20,6 +21,7 @@ namespace btree {
 
     public:
       auto insert(const K& key, const V& val) -> BTree<K, V, N>;
+      auto show() -> void;
 
     private:
       node::SharedNode<K, V, N> _root;
@@ -44,7 +46,7 @@ namespace btree {
 
   template<typename K, typename V, uint N>
   BTree<K, V, N>::BTree() : BTree(std::static_pointer_cast<node::Node<K, V, N>>(
-    std::make_shared<node::Leaf<K, V, N>>()
+    std::make_shared<node::Leaf<K, V, N>>(node::Leaf<K, V, N>::empty_root())
   )) {}
 
   template<typename K, typename V, uint N>
@@ -59,13 +61,19 @@ namespace btree {
       if constexpr (std::is_same_v<T, node::Inserted<K, V, N>>) {
         return BTree(std::move(res));
       } else if constexpr (std::is_same_v<T, node::Split<K, V, N>>) {
-        auto& left = res.first;
-        auto& right = res.second;
-        auto key = left->keys().back();
-        return BTree(node::Deep<K, V, N>({key}, {std::move(left), std::move(right)}));
+        auto [left, right] = res;
+        return BTree(node::Deep<K, V, N>::from_children({
+          std::move(left),
+          std::move(right)
+        }));
       } else {
         static_assert(false, "non-exhaustive visitor");
       }
     }, res);
+  }
+
+  template<typename K, typename V, uint N>
+  auto BTree<K, V, N>::show() -> void {
+    node::show(*this->_root, 0);
   }
 }

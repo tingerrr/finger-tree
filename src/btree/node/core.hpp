@@ -92,7 +92,7 @@ namespace btree::node {
     if (node.is_leaf()) {
       auto leaf = static_cast<const Leaf<K, V, N>&>(node);
 
-      std::cout << istr << "Leaf" << std::endl;
+      std::cout << istr << "Leaf m: " << leaf.measure() << std::endl;
       std::cout << istr << "k: ";
       std::copy(
         leaf.keys().begin(),
@@ -109,15 +109,7 @@ namespace btree::node {
     } else {
       auto deep = static_cast<const Deep<K, V, N>&>(node);
 
-      std::cout << istr << "The Deep" << std::endl;
-      std::cout << istr << "k: ";
-      std::copy(
-        deep.keys().begin(),
-        deep.keys().end(),
-        std::ostream_iterator<int>(std::cout, ", ")
-      );
-      std::cout << std::endl;
-
+      std::cout << istr << "The Deep m: " << deep.measure() << std::endl;
       for (auto& child : deep.children()) {
         show(*child, indent + 1);
       }

@@ -21,6 +21,7 @@ namespace btree::node {
       static_assert(2 < N, "N must be greater than 2");
 
       static constexpr uint ORDER = N;
+
       static constexpr uint CHILD_MAX = ORDER;
       static constexpr uint CHILD_MIN = HALF_CEIL(ORDER);
 
@@ -36,17 +37,35 @@ namespace btree::node {
       Node();
 
     public:
-      auto is_min() const -> bool { return this->keys()->size() == KV_MIN; }
-      auto is_max() const -> bool { return this->keys()->size() == KV_MAX; }
+      auto is_min() const -> bool {
+        return this->is_leaf()
+          ? this->_keys.size() == KV_MIN
+          : this->_keys.size() == CHILD_MIN;
+      }
+      auto is_max() const -> bool {
+        return this->is_leaf()
+          ? this->_keys.size() == KV_MAX
+          : this->_keys.size() == CHILD_MAX;
+      }
 
       virtual auto is_leaf() const -> bool = 0;
       auto is_deep() const -> bool { return !this->is_leaf(); }
 
       auto keys() -> std::span<K> {
-        return std::span(this->_keys);
+        return std::span(
+            this->_keys.data(),
+            this->is_leaf() ? this->_keys.size() : this->_keys.size() - 1
+        );
       }
       auto keys() const -> std::span<const K> {
-        return std::span(this->_keys);
+        return std::span(
+            this->_keys.data(),
+            this->is_leaf() ? this->_keys.size() : this->_keys.size() - 1
+        );
+      }
+
+      auto measure() const -> const K& {
+        return this->_keys.back();
       }
 
       auto index(const K& key) const -> uint;
@@ -58,9 +77,7 @@ namespace btree::node {
   };
 
   template<typename K, typename V, uint N>
-  Node<K, V, N>::Node(std::vector<K>&& keys): _keys(std::move(keys)) {
-    this->_keys.reserve(Node<K, V, N>::KV_MAX + 1);
-  }
+  Node<K, V, N>::Node(std::vector<K>&& keys) : _keys(std::move(keys)) {}
 
   template<typename K, typename V, uint N>
   Node<K, V, N>::Node() : Node({}) {}
