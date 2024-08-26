@@ -37,9 +37,8 @@ namespace btree {
         Node();
 
       public:
-        auto size() const -> int { return this->_keys.size(); }
-        auto is_min() const -> bool { return this->size() == KV_MIN; }
-        auto is_max() const -> bool { return this->size() == KV_MAX; }
+        auto is_min() const -> bool { return this->keys()->size() == KV_MIN; }
+        auto is_max() const -> bool { return this->keys()->size() == KV_MAX; }
 
         virtual auto is_leaf() const -> bool = 0;
         auto is_deep() const -> bool { return !this->is_leaf(); }
@@ -71,8 +70,8 @@ namespace btree {
     auto Node<K, V, N>::index(const K& key) const -> uint {
       // TODO: linear scan for small factors
 
-      auto begin = this->_keys.begin();
-      auto end = this->_keys.end();
+      auto begin = this->keys().begin();
+      auto end = this->keys().end();
 
       auto range = std::equal_range(begin, end, key);
       auto idx = std::distance(begin, range.first);

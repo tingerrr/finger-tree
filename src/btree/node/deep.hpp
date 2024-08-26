@@ -52,10 +52,10 @@ namespace btree {
       const K& key,
       const V& val
     ) -> InsertResult<K, V, N> {
-      std::vector<K> k(this->_keys.begin(), this->_keys.end());
+      std::vector<K> k(this->keys().begin(), this->keys().end());
       std::vector<SharedNode<K, V, N>> c(
-        this->_children.begin(),
-        this->_children.end()
+        this->children().begin(),
+        this->children().end()
       );
 
       auto idx  = this->index(key);

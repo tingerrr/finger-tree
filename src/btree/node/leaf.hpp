@@ -48,13 +48,12 @@ namespace btree {
       const K& key,
       const V& val
     ) -> InsertResult<K, V, N> {
-      std::vector<K> k(this->_keys.begin(), this->_keys.end());
-      std::vector<V> v(this->_vals.begin(), this->_vals.end());
+      std::vector<K> k(this->keys().begin(), this->keys().end());
+      std::vector<V> v(this->vals().begin(), this->vals().end());
 
       auto idx = this->index(key);
 
       if (idx < k.size() && k[idx] == key) {
-        k[idx] = key;
         v[idx] = val;
       } else {
         k.insert(k.begin() + idx, key);
