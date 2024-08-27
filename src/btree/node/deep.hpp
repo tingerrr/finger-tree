@@ -21,7 +21,8 @@ namespace btree::node {
     private:
       Deep(
         std::vector<K>&& keys,
-        std::vector<SharedNode<K, V, N>>&& children
+        std::vector<SharedNode<K, V, N>>&& children,
+        uint size
       );
 
     public:
@@ -54,8 +55,9 @@ namespace btree::node {
   template<typename K, typename V, uint N>
   Deep<K, V, N>::Deep(
     std::vector<K>&& keys,
-    std::vector<SharedNode<K, V, N>>&& children
-  ) : Node<K, V, N>(std::move(keys)), _children(std::move(children)) {
+    std::vector<SharedNode<K, V, N>>&& children,
+    uint size
+  ) : Node<K, V, N>(std::move(keys), size), _children(std::move(children)) {
     this->_keys.reserve(Node<K, V, N>::DEEP_KV_MAX + 1);
     this->_children.reserve(Node<K, V, N>::CHILD_MAX + 1);
   }
@@ -66,11 +68,13 @@ namespace btree::node {
   ) -> Deep<K, V, N> {
     std::vector<K> keys;
 
+    auto size = 0;
     for (auto& child : children) {
+      size += child->size();
       keys.push_back(child->measure());
     }
 
-    return Deep(std::move(keys), std::move(children));
+    return Deep(std::move(keys), std::move(children), size);
   }
 
   template<typename K, typename V, uint N>
@@ -80,15 +84,14 @@ namespace btree::node {
     std::vector<K> keys;
     std::vector<SharedNode<K, V, N>> children_copy;
 
+    auto size = 0;
     for (auto& child : children) {
+      size += child->size();
       keys.push_back(child->measure());
       children_copy.push_back(child);
     }
 
-    return Deep(
-      std::move(keys),
-      std::move(children_copy)
-    );
+    return Deep(std::move(keys), std::move(children_copy), size);
   }
 
   template<typename K, typename V, uint N>
@@ -110,7 +113,16 @@ namespace btree::node {
       if constexpr (std::is_same_v<T, Inserted<K, V, N>>) {
         k[idx] = res->measure();
         c[idx] = std::move(res);
-        return make_result(Deep(std::move(k), std::move(c)));
+        auto size = 0;
+        for (auto& child : c) {
+          size += child->size();
+        }
+
+        return make_result(Deep(
+          std::move(k),
+          std::move(c),
+          size
+        ));
       } else if constexpr (std::is_same_v<T, Split<K, V, N>>) {
         auto [left, right] = res;
 
@@ -123,12 +135,22 @@ namespace btree::node {
           auto [kl, kr] = split_vector(std::move(k));
           auto [cl, cr] = split_vector(std::move(c));
 
+          auto sl = 0;
+          for (auto& child : cl) {
+            sl += child->size();
+          }
+
+          auto sr = 0;
+          for (auto& child : cr) {
+            sr += child->size();
+          }
+
           return make_result(
-            Deep(std::move(kl), std::move(cl)),
-            Deep(std::move(kr), std::move(cr))
+            Deep(std::move(kl), std::move(cl), sl),
+            Deep(std::move(kr), std::move(cr), sr)
           );
         } else {
-          return make_result(Deep(std::move(k), std::move(c)));
+          return make_result(Deep(std::move(k), std::move(c), this->_size + 1));
         }
 
       } else {

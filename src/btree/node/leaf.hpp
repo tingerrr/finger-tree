@@ -53,7 +53,7 @@ namespace btree::node {
   Leaf<K, V, N>::Leaf(
     std::vector<K>&& keys,
     std::vector<V>&& vals
-  ) : Node<K, V, N>(std::move(keys)), _vals(std::move(vals)) {
+  ) : Node<K, V, N>(std::move(keys), vals.size()), _vals(std::move(vals)) {
     this->_keys.reserve(Node<K, V, N>::LEAF_KV_MAX + 1);
     this->_vals.reserve(Node<K, V, N>::LEAF_KV_MAX + 1);
   }

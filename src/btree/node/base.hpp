@@ -34,15 +34,16 @@ namespace btree::node {
       using ValueType = V;
 
     protected:
-      Node(std::vector<K>&& keys);
+      Node(std::vector<K>&& keys, uint _size);
 
     public:
-      auto is_min() const -> bool {
+      auto size() const -> uint { return this->_size; }
+      auto is_node_min() const -> bool {
         return this->is_leaf()
           ? this->keys().size() == DEEP_KV_MIN
           : this->keys().size() == LEAF_KV_MIN;
       }
-      auto is_max() const -> bool {
+      auto is_node_max() const -> bool {
         return this->is_leaf()
           ? this->keys().size() == DEEP_KV_MAX
           : this->keys().size() == LEAF_KV_MAX;
@@ -75,10 +76,14 @@ namespace btree::node {
 
     protected:
       std::vector<K> _keys;
+      uint _size;
   };
 
   template<typename K, typename V, uint N>
-  Node<K, V, N>::Node(std::vector<K>&& keys) : _keys(std::move(keys)) {}
+  Node<K, V, N>::Node(
+    std::vector<K>&& keys,
+    uint size
+  ) : _keys(std::move(keys)), _size(size) {}
 
   template<typename K, typename V, uint N>
   auto Node<K, V, N>::index(const K& key) const -> uint {
