@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace btree::node {
-  template<typename K, typename V, uint N = ORDER_DEFAULT>
+  template<typename K, typename V, uint N>
   class Leaf : public Node<K, V, N> {
     public:
       using BaseType = Node<K, V, N>;
@@ -54,8 +54,8 @@ namespace btree::node {
     std::vector<K>&& keys,
     std::vector<V>&& vals
   ) : Node<K, V, N>(std::move(keys)), _vals(std::move(vals)) {
-    this->_keys.reserve(Node<K, V, N>::KV_MAX + 1);
-    this->_vals.reserve(Node<K, V, N>::KV_MAX + 1);
+    this->_keys.reserve(Node<K, V, N>::LEAF_KV_MAX + 1);
+    this->_vals.reserve(Node<K, V, N>::LEAF_KV_MAX + 1);
   }
 
   template<typename K, typename V, uint N>
@@ -113,7 +113,7 @@ namespace btree::node {
       k.insert(k.begin() + idx, key);
       v.insert(v.begin() + idx, val);
 
-      if (v.size() == Node<K, V, N>::KV_MAX + 1) {
+      if (v.size() == Node<K, V, N>::LEAF_KV_MAX + 1) {
         auto [kl, kr] = split_vector(std::move(k));
         auto [vl, vr] = split_vector(std::move(v));
 

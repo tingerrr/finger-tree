@@ -11,8 +11,6 @@
 #include <variant>
 #include <vector>
 
-#define HALF_CEIL(N) ((N) % 2 == 0) ? ((N) / 2) : ((N) / 2 + 1)
-
 namespace btree::node {
   constexpr uint ORDER_DEFAULT = 32;
 

@@ -11,7 +11,7 @@
 #include <vector>
 
 namespace btree::node {
-  template<typename K, typename V, uint N = ORDER_DEFAULT>
+  template<typename K, typename V, uint N>
   class Node {
     public:
       static_assert(2 < N, "N must be greater than 2");
@@ -19,10 +19,15 @@ namespace btree::node {
       static constexpr uint ORDER = N;
 
       static constexpr uint CHILD_MAX = ORDER;
-      static constexpr uint CHILD_MIN = HALF_CEIL(ORDER);
+      static constexpr uint CHILD_MIN = ORDER % 2 == 0
+        ? ORDER / 2
+        : ORDER / 2 + 1;
 
-      static constexpr uint KV_MAX = CHILD_MAX - 1;
-      static constexpr uint KV_MIN = CHILD_MIN - 1;
+      static constexpr uint DEEP_KV_MAX = CHILD_MAX;
+      static constexpr uint DEEP_KV_MIN = CHILD_MIN;
+
+      static constexpr uint LEAF_KV_MAX = CHILD_MAX - 1;
+      static constexpr uint LEAF_KV_MIN = CHILD_MIN - 1;
 
     public:
       using KeyType = K;
@@ -34,13 +39,13 @@ namespace btree::node {
     public:
       auto is_min() const -> bool {
         return this->is_leaf()
-          ? this->_keys.size() == KV_MIN
-          : this->_keys.size() == CHILD_MIN;
+          ? this->keys().size() == DEEP_KV_MIN
+          : this->keys().size() == LEAF_KV_MIN;
       }
       auto is_max() const -> bool {
         return this->is_leaf()
-          ? this->_keys.size() == KV_MAX
-          : this->_keys.size() == CHILD_MAX;
+          ? this->keys().size() == DEEP_KV_MAX
+          : this->keys().size() == LEAF_KV_MAX;
       }
 
       virtual auto is_leaf() const -> bool = 0;

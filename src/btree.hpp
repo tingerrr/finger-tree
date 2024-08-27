@@ -7,7 +7,7 @@
 #include "btree/node/core.hpp"
 
 namespace btree {
-  template<typename K, typename V, uint N = node::ORDER_DEFAULT>
+  template<typename K, typename V, uint N = ORDER_DEFAULT>
   class BTree {
     public:
       BTree(node::SharedNode<K, V, N>&& root);

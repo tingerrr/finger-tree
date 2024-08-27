@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace btree::node {
-  template<typename K, typename V, uint N = ORDER_DEFAULT>
+  template<typename K, typename V, uint N>
   class Deep : public Node<K, V, N> {
     public:
       using BaseType = Node<K, V, N>;
@@ -56,7 +56,7 @@ namespace btree::node {
     std::vector<K>&& keys,
     std::vector<SharedNode<K, V, N>>&& children
   ) : Node<K, V, N>(std::move(keys)), _children(std::move(children)) {
-    this->_keys.reserve(Node<K, V, N>::CHILD_MAX + 1);
+    this->_keys.reserve(Node<K, V, N>::DEEP_KV_MAX + 1);
     this->_children.reserve(Node<K, V, N>::CHILD_MAX + 1);
   }
 
