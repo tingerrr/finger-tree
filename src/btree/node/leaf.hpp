@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <span>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -41,6 +42,8 @@ namespace btree::node {
         const K& key,
         const V& val
       ) const -> InsertResult<K, V, N> override;
+
+      virtual auto get(const K& key) const -> const V& override;
 
     protected:
       std::vector<V> _vals;
@@ -122,5 +125,15 @@ namespace btree::node {
     }
 
     return make_result(Leaf(std::move(k), std::move(v)));
+  }
+
+  template<typename K, typename V, uint N>
+  auto Leaf<K, V, N>::get(const K& key) const -> const V& {
+    auto idx  = this->index(key);
+    if (idx < this->_keys.size() && this->_keys[idx] == key) {
+      return this->_vals[idx];
+    } else {
+      throw std::out_of_range("key not found");
+    }
   }
 }

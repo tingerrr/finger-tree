@@ -57,13 +57,16 @@ namespace btree::node {
         return this->_keys.back();
       }
 
-      auto index(const K& key) const -> uint;
-
     public:
       virtual auto insert(
         const K& key,
         const V& val
       ) const -> InsertResult<K, V, N> = 0;
+
+      virtual auto get(const K& key) const -> const V& = 0;
+
+    protected:
+      auto index(const K& key) const -> uint;
 
     protected:
       std::vector<K> _keys;

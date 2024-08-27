@@ -20,6 +20,7 @@ namespace btree {
 
     public:
       auto insert(const K& key, const V& val) const -> BTree<K, V, N>;
+      auto get(const K& key) const -> const V&;
       auto show() const -> void;
 
     private:
@@ -69,6 +70,11 @@ namespace btree {
         static_assert(false, "non-exhaustive visitor");
       }
     }, res);
+  }
+
+  template<typename K, typename V, uint N>
+  auto BTree<K, V, N>::get(const K& key) const -> const V& {
+    return this->_root->get(key);
   }
 
   template<typename K, typename V, uint N>
