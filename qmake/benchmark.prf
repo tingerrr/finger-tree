@@ -1,0 +1,3 @@
+googleBenchmark {
+    LIBS *= -lbenchmark
+}

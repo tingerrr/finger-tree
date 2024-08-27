@@ -1,8 +1,8 @@
 CONFIG -= qt
-CONFIG *= addressSanitizer
+#CONFIG *= addressSanitizer
 #CONFIG *= leakSanitizer
 
-CONFIG *= staticlib
+CONFIG *= googleBenchmark
 
 OBJECTS_DIR = out/obj
 MOC_DIR = out/moc
@@ -22,3 +22,4 @@ HEADERS += src/btree.hpp
 SOURCES += src/main.cpp
 
 include(qmake/sanitizer.prf)
+include(qmake/benchmark.prf)
