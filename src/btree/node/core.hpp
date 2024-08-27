@@ -1,5 +1,7 @@
 #pragma once
 
+#include <sys/types.h>
+
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -8,8 +10,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-
-#include <sys/types.h>
 
 #define HALF_CEIL(N) ((N) % 2 == 0) ? ((N) / 2) : ((N) / 2 + 1)
 
@@ -43,7 +43,9 @@ namespace btree::node {
   }
 
   template<typename T>
-  auto split_vector(std::vector<T>&& vec) -> std::pair<std::vector<T>, std::vector<T>> {
+  auto split_vector(
+    std::vector<T>&& vec
+  ) -> std::pair<std::vector<T>, std::vector<T>> {
     std::vector<T> other(
       std::make_move_iterator(vec.begin() + vec.size() / 2),
       std::make_move_iterator(vec.end())
@@ -64,10 +66,14 @@ namespace btree::node {
 
   template<typename N>
   auto make_result(N&& node) -> InsertResult<
-    typename N::KeyType, typename N::ValueType, N::ORDER
+    typename N::KeyType,
+    typename N::ValueType,
+    N::ORDER
   > {
     return std::static_pointer_cast<Node<
-      typename N::KeyType, typename N::ValueType, N::ORDER
+      typename N::KeyType,
+      typename N::ValueType,
+      N::ORDER
     >>(std::make_shared<N>(node));
   }
 
@@ -76,7 +82,9 @@ namespace btree::node {
     N&& left,
     N&& right
   ) -> InsertResult<
-    typename N::KeyType, typename N::ValueType, N::ORDER
+    typename N::KeyType,
+    typename N::ValueType,
+    N::ORDER
   > {
     return std::make_pair(make_shared_node(left), make_shared_node(right));
   }

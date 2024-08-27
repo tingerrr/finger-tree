@@ -12,6 +12,9 @@ namespace btree::node {
   template<typename K, typename V, uint N = ORDER_DEFAULT>
   class Leaf : public Node<K, V, N> {
     public:
+      using BaseType = Node<K, V, N>;
+
+    public:
       Leaf() = delete;
 
     private:
@@ -31,10 +34,13 @@ namespace btree::node {
     public:
       virtual auto is_leaf() const -> bool override { return true; }
 
-      auto vals() -> std::span<V> { return std::span(this->_vals); }
       auto vals() const -> std::span<const V> { return std::span(this->_vals); }
 
-      virtual auto insert(const K& key, const V& val) -> InsertResult<K, V, N> override;
+    public:
+      virtual auto insert(
+        const K& key,
+        const V& val
+      ) const -> InsertResult<K, V, N> override;
 
     protected:
       std::vector<V> _vals;
@@ -92,7 +98,7 @@ namespace btree::node {
   auto Leaf<K, V, N>::insert(
     const K& key,
     const V& val
-  ) -> InsertResult<K, V, N> {
+  ) const -> InsertResult<K, V, N> {
     std::vector<K> k(this->keys().begin(), this->keys().end());
     std::vector<V> v(this->vals().begin(), this->vals().end());
 

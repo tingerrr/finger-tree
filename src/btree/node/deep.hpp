@@ -13,6 +13,9 @@ namespace btree::node {
   template<typename K, typename V, uint N = ORDER_DEFAULT>
   class Deep : public Node<K, V, N> {
     public:
+      using BaseType = Node<K, V, N>;
+
+    public:
       Deep() = delete;
 
     private:
@@ -32,14 +35,15 @@ namespace btree::node {
     public:
       virtual auto is_leaf() const -> bool override { return false; }
 
-      auto children() -> std::span<SharedNode<K, V, N>> {
-        return std::span(this->_children);
-      }
       auto children() const -> std::span<const SharedNode<K, V, N>> {
         return std::span(this->_children);
       }
 
-      virtual auto insert(const K& key, const V& val) -> InsertResult<K, V, N> override;
+    public:
+      virtual auto insert(
+        const K& key,
+        const V& val
+      ) const -> InsertResult<K, V, N> override;
 
     protected:
       std::vector<SharedNode<K, V, N>> _children;
@@ -89,7 +93,7 @@ namespace btree::node {
   auto Deep<K, V, N>::insert(
     const K& key,
     const V& val
-  ) -> InsertResult<K, V, N> {
+  ) const -> InsertResult<K, V, N> {
     std::vector<K> k(this->_keys.begin(), this->_keys.end());
     std::vector<SharedNode<K, V, N>> c(
       this->children().begin(),

@@ -16,12 +16,11 @@ namespace btree {
       BTree();
 
     public:
-      auto root() -> node::Node<K, V, N>& { return *this->_root; }
       auto root() const -> const node::Node<K, V, N>& { return *this->_root; }
 
     public:
-      auto insert(const K& key, const V& val) -> BTree<K, V, N>;
-      auto show() -> void;
+      auto insert(const K& key, const V& val) const -> BTree<K, V, N>;
+      auto show() const -> void;
 
     private:
       node::SharedNode<K, V, N> _root;
@@ -53,7 +52,7 @@ namespace btree {
   auto BTree<K, V, N>::insert(
     const K& key,
     const V& val
-  ) -> BTree<K, V, N> {
+  ) const -> BTree<K, V, N> {
     auto res = this->_root->insert(key, val);
 
     return std::visit([](auto&& res){
@@ -73,7 +72,7 @@ namespace btree {
   }
 
   template<typename K, typename V, uint N>
-  auto BTree<K, V, N>::show() -> void {
+  auto BTree<K, V, N>::show() const -> void {
     node::show(*this->_root, 0);
   }
 }

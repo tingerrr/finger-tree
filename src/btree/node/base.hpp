@@ -10,10 +10,6 @@
 #include <utility>
 #include <vector>
 
-// TODO: root node can have less than MIN children/less than MIN - 1 key-values
-// must either be a separate type or be accounted for in the derived types by
-// not checking for MIN
-
 namespace btree::node {
   template<typename K, typename V, uint N = ORDER_DEFAULT>
   class Node {
@@ -34,7 +30,6 @@ namespace btree::node {
 
     protected:
       Node(std::vector<K>&& keys);
-      Node();
 
     public:
       auto is_min() const -> bool {
@@ -51,12 +46,6 @@ namespace btree::node {
       virtual auto is_leaf() const -> bool = 0;
       auto is_deep() const -> bool { return !this->is_leaf(); }
 
-      auto keys() -> std::span<K> {
-        return std::span(
-            this->_keys.data(),
-            this->is_leaf() ? this->_keys.size() : this->_keys.size() - 1
-        );
-      }
       auto keys() const -> std::span<const K> {
         return std::span(
             this->_keys.data(),
@@ -70,7 +59,11 @@ namespace btree::node {
 
       auto index(const K& key) const -> uint;
 
-      virtual auto insert(const K& key, const V& val) -> InsertResult<K, V, N> = 0;
+    public:
+      virtual auto insert(
+        const K& key,
+        const V& val
+      ) const -> InsertResult<K, V, N> = 0;
 
     protected:
       std::vector<K> _keys;
@@ -78,9 +71,6 @@ namespace btree::node {
 
   template<typename K, typename V, uint N>
   Node<K, V, N>::Node(std::vector<K>&& keys) : _keys(std::move(keys)) {}
-
-  template<typename K, typename V, uint N>
-  Node<K, V, N>::Node() : Node({}) {}
 
   template<typename K, typename V, uint N>
   auto Node<K, V, N>::index(const K& key) const -> uint {
