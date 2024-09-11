@@ -19,6 +19,14 @@ HEADERS += src/btree/node.hpp
 HEADERS += src/btree/core.hpp
 HEADERS += src/btree.hpp
 
+
+HEADERS += src/ftree/core.hpp
+HEADERS += src/ftree/deep.hpp
+HEADERS += src/ftree/empty.hpp
+HEADERS += src/ftree/node.hpp
+HEADERS += src/ftree/single.hpp
+HEADERS += src/ftree.hpp
+
 SOURCES += src/main.cpp
 
 include(qmake/sanitizer.prf)

@@ -1,0 +1,202 @@
+#pragma once
+
+#include <sys/types.h>
+
+#include <span>
+#include <memory>
+#include <variant>
+#include <vector>
+
+namespace ftree::node {
+  template<typename K, typename V>
+  class Node;
+
+  template<typename K, typename V>
+  class Deep {
+    public:
+      Deep() = delete;
+
+      Deep(const Node<K, V>& a, const Node<K, V>& b);
+      Deep(const Node<K, V>& a, const Node<K, V>& b, const Node<K, V>& c);
+
+    public:
+      auto is_two() const -> bool { return this->_is_two; }
+      auto is_three() const -> bool { return !this->_is_two; }
+      auto size() const -> uint { return this->_is_two ? 2 : 3; }
+
+      auto key() const -> const K& { return this->_key; }
+
+      auto children() const -> std::span<const Node<K, V>> {
+        return std::span(this->_children, this->size());
+      }
+
+    private:
+      bool _is_two;
+      K _key;
+      Node<K, V> _children[3];
+  };
+
+  template<typename K, typename V>
+  class Leaf {
+    public:
+      Leaf() = delete;
+
+      Leaf(const K& key, const V& val);
+
+    public:
+      auto key() const -> const K& { return this->_key; }
+      auto val() const -> const V& { return this->_val; }
+
+    private:
+      K _key;
+      V _val;
+  };
+
+  template<typename K, typename V>
+  class Node {
+    private:
+      class Repr {
+        public:
+          using Variant = std::variant<Deep<K, V>, Leaf<K, V>>;
+
+        public:
+          Repr() = delete;
+          Repr(const Repr& other) = delete;
+          Repr(Repr& other) = delete;
+          Repr(Repr&& other) = delete;
+
+        public:
+          Repr(Deep<K, V> repr);
+          Repr(Leaf<K, V> repr);
+
+        public:
+          Variant _repr;
+      };
+
+    public:
+      Node() = delete;
+
+    public:
+      Node(Deep<K, V> repr);
+      Node(Leaf<K, V> repr);
+
+      Node(const K& key, const V& val);
+      Node(const Node<K, V>& a, const Node<K, V>& b);
+      Node(const Node<K, V>& a, const Node<K, V>& b, const Node<K, V>& c);
+
+    public:
+      auto key() const -> const K&;
+      auto as_leaf() const -> const Leaf<K, V>*;
+      auto as_deep() const -> const Deep<K, V>*;
+
+    private:
+      std::shared_ptr<Repr> _repr;
+  };
+
+  template<typename K, typename V>
+  Deep<K, V>::Deep(
+    const Node<K, V>& a,
+    const Node<K, V>& b
+  ) : _children { a, b } {}
+
+  template<typename K, typename V>
+  Deep<K, V>::Deep(
+    const Node<K, V>& a,
+    const Node<K, V>& b,
+    const Node<K, V>& c
+  ) : _children { a, b, c } {}
+
+  template<typename K, typename V>
+  Leaf<K, V>::Leaf(const K& key, const V& val) : _key(key), _val(val) {}
+
+  template<typename K, typename V>
+  Node<K, V>::Repr::Repr(Deep<K, V> repr) : _repr(repr) {}
+
+  template<typename K, typename V>
+  Node<K, V>::Repr::Repr(Leaf<K, V> repr) : _repr(repr) {}
+
+  template<typename K, typename V>
+  Node<K, V>::Node(Deep<K, V> repr)
+    : _repr(std::make_shared<Repr>(repr)) {}
+
+  template<typename K, typename V>
+  Node<K, V>::Node(Leaf<K, V> repr)
+    : _repr(std::make_shared<Repr>(repr)) {}
+
+  template<typename K, typename V>
+  Node<K, V>::Node(const K& key, const V& val) : Node(Leaf(key, val)) {}
+
+  template<typename K, typename V>
+  Node<K, V>::Node(
+    const Node<K, V>& a,
+    const Node<K, V>& b
+  ) : Node(Deep(a, b)) {}
+
+  template<typename K, typename V>
+  Node<K, V>::Node(
+    const Node<K, V>& a,
+    const Node<K, V>& b,
+    const Node<K, V>& c
+  ) : Node(Deep(a, b, c)) {}
+
+  template<typename K, typename V>
+  auto Node<K, V>::key() const -> const K& {
+    return std::visit([](auto& repr) { return repr.key(); }, *this->_repr);
+  }
+
+  template<typename K, typename V>
+  auto Node<K, V>::as_leaf() const -> const Leaf<K, V>* {
+    return std::visit([](auto& repr) {
+      using T = std::decay_t<decltype(repr)>;
+
+      if constexpr (std::is_same_v<T, Deep<K, V>>) {
+        return nullptr;
+      } else if constexpr (std::is_same_v<T, Leaf<K, V>>) {
+        return repr;
+      } else {
+        static_assert(false, "non-exhaustive visitor");
+      }
+    }, this->_repr->_repr);
+  }
+
+  template<typename K, typename V>
+  auto Node<K, V>::as_deep() const -> const Deep<K, V>* {
+    return std::visit([](auto& repr) {
+      using T = std::decay_t<decltype(repr)>;
+
+      if constexpr (std::is_same_v<T, Deep<K, V>>) {
+        return repr;
+      } else if constexpr (std::is_same_v<T, Leaf<K, V>>) {
+        return nullptr;
+      } else {
+        static_assert(false, "non-exhaustive visitor");
+      }
+    }, this->_repr->_repr);
+  }
+
+  template<typename K, typename V>
+  auto pack_nodes(std::span<const Node<K, V>> nodes) -> std::vector<Node<K, V>> {
+    std::vector<Node<K, V>> packed;
+
+    switch (nodes.len()) {
+      case 0:
+        break;
+      case 2:
+        packed.push_back(Node(Deep(nodes[0], nodes[1])));
+        break;
+      case 3:
+        packed.push_back(Node(Deep(nodes[0], nodes[1], nodes[2])));
+        break;
+      case 4:
+        packed.push_back(Node(Deep(nodes[0], nodes[1])));
+        packed.push_back(Node(Deep(nodes[2], nodes[3])));
+        break;
+      default:
+        packed.push_back(Node(Deep(nodes[0], nodes[1], nodes[2])));
+        nodes = nodes.subspan(3);
+        break;
+    }
+
+    return packed;
+  }
+}
