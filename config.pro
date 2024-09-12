@@ -1,4 +1,6 @@
 CONFIG -= qt
+#CONFIG += debug
+
 #CONFIG *= addressSanitizer
 #CONFIG *= leakSanitizer
 
@@ -23,6 +25,9 @@ HEADERS += src/btree.hpp
 HEADERS += src/ftree/core.hpp
 HEADERS += src/ftree/deep.hpp
 HEADERS += src/ftree/empty.hpp
+HEADERS += src/ftree/node/core.hpp
+HEADERS += src/ftree/node/deep.hpp
+HEADERS += src/ftree/node/leaf.hpp
 HEADERS += src/ftree/node.hpp
 HEADERS += src/ftree/single.hpp
 HEADERS += src/ftree.hpp

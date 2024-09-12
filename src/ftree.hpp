@@ -14,8 +14,6 @@
 #include <variant>
 
 namespace ftree {
-  enum Direction { Left, Right };
-
   template<typename K, typename V>
   class FingerTree {
     private:
@@ -41,15 +39,25 @@ namespace ftree {
     public:
       FingerTree();
 
+      static auto from(std::span<const std::pair<K, V>> nodes) -> FingerTree<K, V>;
+
     private:
       FingerTree(const Empty<K, V>& repr);
       FingerTree(const Single<K, V>& repr);
       FingerTree(const Deep<K, V>& repr);
 
+      static auto from_impl(
+        std::span<const node::Node<K, V>> nodes
+      ) -> FingerTree<K, V>;
+
+      static auto deep_smart(
+        std::span<const node::Node<K, V>> left,
+        const FingerTree<K, V>& middle,
+        std::span<const node::Node<K, V>> right
+      ) -> FingerTree<K, V>;
+
     public:
       auto size() const -> uint;
-
-      auto key() const -> const K*;
 
       auto as_empty() const -> const Empty<K, V>*;
       auto as_single() const -> const Single<K, V>*;
@@ -67,6 +75,9 @@ namespace ftree {
 
       auto pop(Direction dir) -> std::optional<std::pair<K, V>>;
       auto take(Direction dir, uint count) -> std::vector<std::pair<K, V>>;
+      auto split(
+        const K& key
+      ) -> std::tuple<FingerTree<K, V>, std::optional<V>, FingerTree<K, V>>;
 
       static auto concat(
         const FingerTree<K, V>& left,
@@ -84,6 +95,11 @@ namespace ftree {
 
       auto pop_impl(Direction dir) -> std::optional<node::Node<K, V>>;
       auto take_impl(Direction dir, uint count) -> std::vector<node::Node<K, V>>;
+      auto split_impl(const K& key) -> std::tuple<
+        FingerTree<K, V>,
+        std::optional<node::Node<K, V>>,
+        FingerTree<K, V>
+      >;
 
       static auto concat_impl(
         const FingerTree<K, V>& left,
@@ -103,10 +119,26 @@ namespace ftree {
 
   template<typename K, typename V>
   FingerTree<K, V>::Repr::Repr(const Single<K, V>& repr) : _repr(Repr::Variant(repr)) {}
-  
+
+  //
+  // public constructors and consturctor functions
+  //
   template<typename K, typename V>
   FingerTree<K, V>::FingerTree() : FingerTree(Empty<K, V>()) {}
 
+  template<typename K, typename V>
+  auto from(std::span<const std::pair<K, V>> pairs) -> FingerTree<K, V> {
+    // TODO: ensure invariants
+    std::vector<node::Node<K, V>> nodes;
+    for (const auto& [k, v] : pairs) {
+      nodes.push_back(nodes);
+    }
+    return FingerTree<K, V>::from_impl(std::span(nodes));
+  }
+
+  //
+  // private constructors and consturctor functions
+  //
   template<typename K, typename V>
   FingerTree<K, V>::FingerTree(const Empty<K, V>& repr)
     : _repr(std::make_shared<Repr>(repr)) {}
@@ -118,6 +150,61 @@ namespace ftree {
   template<typename K, typename V>
   FingerTree<K, V>::FingerTree(const Deep<K, V>& repr)
     : _repr(std::make_shared<Repr>(repr)) {}
+
+  template<typename K, typename V>
+  auto FingerTree<K, V>::from_impl(
+    std::span<const node::Node<K, V>> nodes
+  ) -> FingerTree<K, V> {
+    auto tree = FingerTree<K, V>();
+    tree.append_impl(Right, nodes);
+    return tree;
+  }
+
+  // deep_L and deep_R special case
+  // - may contain undersized sides which are filled by underflow
+  // - retains the depth of the passed in nodes
+  template<typename K, typename V>
+  auto FingerTree<K, V>::deep_smart(
+    std::span<const node::Node<K, V>> left,
+    const FingerTree<K, V>& middle,
+    std::span<const node::Node<K, V>> right
+  ) -> FingerTree<K, V> {
+    std::vector<node::Node<K, V>> left_copy(left.begin(), left.end());
+    std::vector<node::Node<K, V>> right_copy(right.begin(), right.end());
+    FingerTree<K, V> middle_copy = middle;
+
+    if (left_copy.size() == 0) {
+      if (middle_copy.is_empty()) {
+        return FingerTree<K, V>::from_impl(right_copy);
+      }
+
+      // NOTE: middle cannot contain leaves and is not empty
+      auto underflow = *middle_copy.pop_impl(Left);
+      for (const auto& unpacked : underflow.as_deep()->children()) {
+        left_copy.push_back(unpacked);
+      }
+    } else if (right_copy.size() == 0) {
+      if (middle_copy.is_empty()) {
+        return FingerTree<K, V>::from_impl(left_copy);
+      }
+
+      // NOTE: middle cannot contain leaves and is not empty
+      auto underflow = *middle_copy.pop_impl(Right);
+      for (const auto& unpacked : underflow.as_deep()->children()) {
+        right_copy.push_back(unpacked);
+      }
+    }
+
+    return FingerTree(Deep(left_copy, middle_copy, right_copy));
+  }
+
+  //
+  // getters and helper functions
+  //
+  template<typename K, typename V>
+  auto FingerTree<K, V>::size() const -> uint {
+    return 0;
+  }
 
   template<typename K, typename V>
   auto FingerTree<K, V>::as_empty() const -> const Empty<K, V>* {
@@ -249,16 +336,90 @@ namespace ftree {
         this->_repr = std::make_shared<Repr>(Empty<K, V>());
         return std::optional<node::Node<K, V>>();
       } else if constexpr (std::is_same_v<T, Single<K, V>>) {
-        this->_repr = std::make_shared<Repr>(FingerTree(Empty<K, V>()));
+        this->_repr = std::make_shared<Repr>(Empty<K, V>());
         return std::optional<node::Node<K, V>>(repr.node());
       } else if constexpr (std::is_same_v<T, Deep<K, V>>) {
-        // TODO: impl underflow case
+        std::vector<node::Node<K, V>> left(repr.left().begin(), repr.left().end());
+        std::vector<node::Node<K, V>> right(repr.right().begin(), repr.right().end());
+        FingerTree<K, V> middle = repr.middle();
+
+        std::optional<node::Node<K, V>> node;
+
         switch (dir) {
           case Left:
+            node = std::optional(left.front());
+            left.erase(left.begin());
+            if (left.size() > 0) {
+              this->_repr = std::make_shared<Repr>(Deep(left, middle, right));
+              return node;
+            }
             break;
           case Right:
+            node = std::optional(right.back());
+            right.pop_back();
+            if (right.size() > 0) {
+              this->_repr = std::make_shared<Repr>(Deep(left, middle, right));
+              return node;
+            }
             break;
         }
+
+        // NOTE: left/right is empty after taking out a node, we need to either
+        // take from the other side or the middle
+        if (middle.is_empty()) {
+          switch (dir) {
+            case Left:
+              if (right.size() == 1) {
+                this->_repr = std::make_shared<Repr>(Single(right.front()));
+              } else {
+                for (
+                  auto it = right.begin(); it != right.begin() + right.size() / 2; it++
+                ) {
+                  left.push_back(*it);
+                }
+                right.erase(right.begin(), right.begin() + right.size() / 2);
+                this->_repr = std::make_shared<Repr>(Deep(left, middle, right));
+              }
+              break;
+            case Right:
+              if (left.size() == 1) {
+                this->_repr = std::make_shared<Repr>(Single(left.back()));
+              } else {
+                for (
+                  auto it = --left.end(); it != left.begin() + left.size() / 2 - 1; it--
+                ) {
+                  right.insert(right.begin(), *it);
+                }
+                left.erase(left.begin() + left.size() / 2, left.end());
+                this->_repr = std::make_shared<Repr>(Deep(left, middle, right));
+              }
+              break;
+          }
+        } else {
+          // NOTE: we know this is deep because a middle tree cannot have leaf
+          // nodes
+          node::Node<K, V> underflow = *middle.pop_impl(dir);
+
+          switch (dir) {
+            case Left:
+              for (const auto& child : underflow.as_deep()->children()) {
+                left.push_back(child);
+              }
+              break;
+            case Right:
+              for (
+                auto it = underflow.as_deep()->children().rbegin();
+                it != underflow.as_deep()->children().rend();
+                it++
+              ) {
+                right.insert(right.begin(), *it);
+              }
+              break;
+          }
+
+          this->_repr = std::make_shared<Repr>(Deep(left, middle, right));
+        }
+        return node;
       } else {
         static_assert(false, "non-exhaustive visitor");
       }
@@ -285,6 +446,72 @@ namespace ftree {
     }
 
     return nodes;
+  }
+
+  template<typename K, typename V>
+  auto FingerTree<K, V>::split_impl(const K& key) -> std::tuple<
+    FingerTree<K, V>,
+    std::optional<node::Node<K, V>>,
+    FingerTree<K, V>
+  > {
+    if (this->is_empty()) {
+      return std::tuple(
+        FingerTree(),
+        std::optional<node::Node<K, V>>(),
+        FingerTree()
+      );
+    }
+
+    if (const auto* single = this->as_single()) {
+      return std::tuple(
+        FingerTree(),
+        std::optional(single->node()),
+        FingerTree()
+      );
+    }
+
+    const auto* deep = this->as_deep();
+
+    if (deep->left().back().key() >= key) {
+      auto [left, node, right] = node::Node<K, V>::digit_split(deep->left(), key);
+      return std::make_tuple(
+        FingerTree<K, V>::from_impl(left),
+        node,
+        FingerTree<K, V>::deep_smart(right, deep->middle(), deep->right())
+      );
+    }
+
+    auto middle_single = deep->middle().as_single();
+    auto middle_deep = deep->middle().as_deep();
+
+    bool is_middle = middle_single
+      ? middle_single->node().key() >= key
+      : middle_deep
+        ? middle_deep->right().back().key() >= key
+        : false;
+
+    if (is_middle) {
+      auto middle = deep->middle();
+      auto [middle_left, packed_node, middle_right] = middle.split_impl(key);
+      // NOTE: middle cannot contain leaves and is not empty
+      auto [left, node, right] = node::Node<K, V>::digit_split(
+        packed_node->as_deep()->children(),
+        key
+      );
+
+      return std::make_tuple(
+        FingerTree<K, V>::deep_smart(deep->left(), middle_left, left),
+        node,
+        FingerTree<K, V>::deep_smart(right, middle_right, deep->right())
+      );
+    }
+
+    auto [left, node, right] = node::Node<K, V>::digit_split(deep->right(), key);
+    return std::make_tuple(
+      FingerTree<K, V>::deep_smart(deep->left(), deep->middle(), left),
+      node,
+      FingerTree<K, V>::from_impl(right)
+    );
   }
 
   template<typename K, typename V>
@@ -348,8 +575,8 @@ namespace ftree {
     std::optional<node::Node<K, V>> node = this->get_impl(key);
     std::optional<std::pair<K, V>> unpacked;
 
-    if (*node) {
-      auto leaf = node.as_leaf();
+    if (node) {
+      auto leaf = node->as_leaf();
       unpacked = std::optional(leaf->val());
     }
 
@@ -386,10 +613,10 @@ namespace ftree {
     std::optional<node::Node<K, V>> node = this->pop_impl(dir);
     std::optional<std::pair<K, V>> unpacked;
 
-    if (*node) {
+    if (node) {
       // NOTE: we know that this top level impl is not a recursive call to
       // pop_impl and therefore returns a leaf node
-      auto leaf = node.as_leaf();
+      auto leaf = node->as_leaf();
       unpacked = std::optional(std::make_pair(leaf->key(), leaf->val()));
     }
 
@@ -416,6 +643,23 @@ namespace ftree {
     }
 
     return pairs;
+  }
+
+  template<typename K, typename V>
+  auto FingerTree<K, V>::split(
+    const K& key
+  ) -> std::tuple<FingerTree<K, V>, std::optional<V>, FingerTree<K, V>> {
+    auto [left, node, right] = this->split_impl(key);
+    std::optional<V> unpacked;
+
+    if (node) {
+      // NOTE: we know that this top level impl is not a recursive call to
+      // split_impl and therefore returns a leaf node
+      auto leaf = node->as_leaf();
+      unpacked = std::optional(leaf->val());
+    }
+
+    return std::make_tuple(left, unpacked, right);
   }
 
   template<typename K, typename V>

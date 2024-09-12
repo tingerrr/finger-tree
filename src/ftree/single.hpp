@@ -13,7 +13,6 @@ namespace ftree {
 
     public:
       auto node() const -> const node::Node<K, V>& { return this->_node; }
-      auto key() const -> const K& { return this->_node->key(); }
 
     private:
       node::Node<K, V> _node;

@@ -1,59 +1,19 @@
 #pragma once
 
-#include <iostream>
-#include <optional>
+#include "src/ftree/node/core.hpp"
+#include "src/ftree/node/deep.hpp"
+#include "src/ftree/node/leaf.hpp"
+
 #include <sys/types.h>
 
+#include <iostream>
+#include <optional>
 #include <span>
 #include <memory>
 #include <variant>
 #include <vector>
 
 namespace ftree::node {
-  template<typename K, typename V>
-  class Node;
-
-  template<typename K, typename V>
-  class Deep {
-    public:
-      Deep() = delete;
-
-      Deep(const Node<K, V>& a, const Node<K, V>& b);
-      Deep(const Node<K, V>& a, const Node<K, V>& b, const Node<K, V>& c);
-
-    public:
-      auto is_two() const -> bool { return this->_is_two; }
-      auto is_three() const -> bool { return !this->_is_two; }
-      auto size() const -> uint { return this->_is_two ? 2 : 3; }
-
-      auto key() const -> const K& { return this->_key; }
-
-      auto children() const -> std::span<const Node<K, V>> {
-        return std::span(this->_children);
-      }
-
-    private:
-      bool _is_two;
-      K _key;
-      std::vector<Node<K, V>> _children;
-  };
-
-  template<typename K, typename V>
-  class Leaf {
-    public:
-      Leaf() = delete;
-
-      Leaf(const K& key, const V& val);
-
-    public:
-      auto key() const -> const K& { return this->_key; }
-      auto val() const -> const V& { return this->_val; }
-
-    private:
-      K _key;
-      V _val;
-  };
-
   template<typename K, typename V>
   class Node {
     private:
@@ -88,6 +48,7 @@ namespace ftree::node {
 
     public:
       auto key() const -> const K&;
+
       auto as_leaf() const -> const Leaf<K, V>*;
       auto as_deep() const -> const Deep<K, V>*;
 
@@ -106,25 +67,18 @@ namespace ftree::node {
         const K& key
       ) -> std::optional<Node<K, V>>;
 
+      static auto digit_split(
+        std::span<const Node<K, V>> nodes,
+        const K& key
+      ) -> std::tuple<
+        std::span<const Node<K, V>>,
+        std::optional<Node<K, V>>,
+        std::span<const Node<K, V>>
+      >;
+
     private:
       std::shared_ptr<Repr> _repr;
   };
-
-  template<typename K, typename V>
-  Deep<K, V>::Deep(
-    const Node<K, V>& a,
-    const Node<K, V>& b
-  ) :  _is_two(true), _children { a, b } {}
-
-  template<typename K, typename V>
-  Deep<K, V>::Deep(
-    const Node<K, V>& a,
-    const Node<K, V>& b,
-    const Node<K, V>& c
-  ) :  _is_two(false), _children { a, b, c } {}
-
-  template<typename K, typename V>
-  Leaf<K, V>::Leaf(const K& key, const V& val) : _key(key), _val(val) {}
 
   template<typename K, typename V>
   Node<K, V>::Repr::Repr(Deep<K, V> repr) : _repr(repr) {}
@@ -158,7 +112,11 @@ namespace ftree::node {
 
   template<typename K, typename V>
   auto Node<K, V>::key() const -> const K& {
-    return std::visit([](auto& repr) { return repr.key(); }, *this->_repr);
+    if (const auto* deep = this->as_deep()) {
+      return deep->key();
+    } else {
+      return this->as_leaf()->key();
+    }
   }
 
   template<typename K, typename V>
@@ -173,29 +131,23 @@ namespace ftree::node {
 
   template<typename K, typename V>
   auto Node<K, V>::get(const K& key) -> std::optional<Node<K, V>> {
-    return std::visit([this, key](auto& repr) {
-      using T = std::decay_t<decltype(repr)>;
-
-      if constexpr (std::is_same_v<T, Deep<K, V>>) {
-        // NOTE: we only have 2 or 3 children, a linear search suffices
-
-        for (const auto& child : repr.children()) {
-          if (child.key() <= key) {
-            return child.get(key);
-          }
+    if (const auto* deep = this->as_deep()) {
+      // NOTE: we only have 2 or 3 children, a linear search suffices
+      for (const auto& child : deep->children()) {
+        if (child.key_in_range(key)) {
+          return child.get(key);
         }
-
-        return std::optional<Node<K, V>>();
-      } else if constexpr (std::is_same_v<T, Leaf<K, V>>) {
-        if (repr.key() == key) {
-          return std::optional<Node<K, V>>(*this);
-        } else {
-          return std::optional<Node<K, V>>();
-        }
-      } else {
-        static_assert(false, "non-exhaustive visitor");
       }
-    }, this->_repr->_repr);
+
+      return std::optional<Node<K, V>>();
+    } else {
+      const auto* leaf = this->as_leaf();
+      if (leaf->key_in_range(key)) {
+        return std::optional<Node<K, V>>(*this);
+      } else {
+        return std::optional<Node<K, V>>();
+      }
+    }
   }
 
   template<typename K, typename V>
@@ -264,11 +216,37 @@ namespace ftree::node {
     // NOTE: we only have between 1 and 4 digits, a linear search suffices
 
     for (const auto& node : nodes) {
-      if (node.key() <= key) {
+      if (node.key_in_range(key)) {
         return node.get(key);
       }
     }
 
     return std::optional<Node<K, V>>();
+  }
+
+  template<typename K, typename V>
+  auto Node<K, V>::digit_split(
+    std::span<const Node<K, V>> nodes,
+    const K& key
+  ) -> std::tuple<
+    std::span<const Node<K, V>>,
+    std::optional<Node<K, V>>,
+    std::span<const Node<K, V>>
+  > {
+    for (uint i = 0; i < nodes.size(); i++) {
+      if (nodes[i].key() >= key) {
+        return std::make_tuple(
+          nodes.subspan(0, i),
+          std::optional(nodes[i]),
+          nodes.subspan(i + 1)
+        );
+      }
+    }
+
+    return std::make_tuple(
+      nodes,
+      std::optional<Node<K, V>>(),
+      std::span<const Node<K, V>>()
+    );
   }
 }

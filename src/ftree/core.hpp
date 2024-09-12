@@ -11,7 +11,9 @@ namespace ftree {
 
   template<typename K, typename V>
   class Deep;
-  
+
   template<typename K, typename V>
   class FingerTree;
+
+  enum Direction { Left, Right };
 }
