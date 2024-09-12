@@ -72,9 +72,12 @@ namespace ftree {
 
       auto push(Direction dir, const K& key, const V& val) -> void;
       auto append(Direction dir, std::span<const std::pair<K, V>> pairs) -> void;
+      auto insert(const K& key, const V& val) -> std::optional<V>;
 
       auto pop(Direction dir) -> std::optional<std::pair<K, V>>;
       auto take(Direction dir, uint count) -> std::vector<std::pair<K, V>>;
+      auto remove(const K& key) -> std::optional<V>;
+
       auto split(
         const K& key
       ) -> std::tuple<FingerTree<K, V>, std::optional<V>, FingerTree<K, V>>;
@@ -92,9 +95,14 @@ namespace ftree {
 
       auto push_impl(Direction dir, const node::Node<K, V>& node) -> void;
       auto append_impl(Direction dir, std::span<const node::Node<K, V>> nodes) -> void;
+      auto insert_impl(
+        const node::Node<K, V>& node
+      ) -> std::optional<node::Node<K, V>>;
 
       auto pop_impl(Direction dir) -> std::optional<node::Node<K, V>>;
       auto take_impl(Direction dir, uint count) -> std::vector<node::Node<K, V>>;
+      auto remove_impl(const K& key) -> std::optional<node::Node<K, V>>;
+
       auto split_impl(const K& key) -> std::tuple<
         FingerTree<K, V>,
         std::optional<node::Node<K, V>>,
@@ -328,6 +336,17 @@ namespace ftree {
   }
 
   template<typename K, typename V>
+  auto FingerTree<K, V>::insert_impl(
+    const node::Node<K, V>& node
+  ) -> std::optional<node::Node<K, V>> {
+    auto [left, found, right] = this->split_impl(node.key());
+    left.push_impl(Right, node);
+
+    *this = FingerTree<K, V>::concat(left, right);
+    return found;
+  }
+
+  template<typename K, typename V>
   auto FingerTree<K, V>::pop_impl(Direction dir) -> std::optional<node::Node<K, V>> {
     return std::visit([this, dir](auto& repr) {
       using T = std::decay_t<decltype(repr)>;
@@ -446,6 +465,13 @@ namespace ftree {
     }
 
     return nodes;
+  }
+
+  template<typename K, typename V>
+  auto FingerTree<K, V>::remove_impl(const K& key) -> std::optional<node::Node<K, V>> {
+    auto [left, node, right] = this->split_impl(key);
+    *this = FingerTree<K, V>::concat(left, right);
+    return node;
   }
 
   template<typename K, typename V>
@@ -609,6 +635,15 @@ namespace ftree {
   }
 
   template<typename K, typename V>
+  auto FingerTree<K, V>::insert(const K& key, const V& val) -> std::optional<V> {
+    auto [left, found, right] = this->split(key);
+    left.push(Right, key, val);
+
+    *this = FingerTree<K, V>::concat(left, right);
+    return found;
+  }
+
+  template<typename K, typename V>
   auto FingerTree<K, V>::pop(Direction dir) -> std::optional<std::pair<K, V>> {
     std::optional<node::Node<K, V>> node = this->pop_impl(dir);
     std::optional<std::pair<K, V>> unpacked;
@@ -646,6 +681,13 @@ namespace ftree {
   }
 
   template<typename K, typename V>
+  auto FingerTree<K, V>::remove(const K& key) -> std::optional<V> {
+    auto [left, val, right] = this->split(key);
+    *this = FingerTree<K, V>::concat(left, right);
+    return val;
+  }
+
+  template<typename K, typename V>
   auto FingerTree<K, V>::split(
     const K& key
   ) -> std::tuple<FingerTree<K, V>, std::optional<V>, FingerTree<K, V>> {
@@ -656,7 +698,16 @@ namespace ftree {
       // NOTE: we know that this top level impl is not a recursive call to
       // split_impl and therefore returns a leaf node
       auto leaf = node->as_leaf();
-      unpacked = std::optional(leaf->val());
+      // NOTE: the inner impl of split returns the first node which is larger
+      // than or equal to our key as it needs this for the recursive definition
+      // we don't need that, we need to only return the actual valid key, but
+      // the fully split left and right trees, if it's ont the exact node we
+      // want to push it back
+      if (leaf->key() == key) {
+        unpacked = std::optional(leaf->val());
+      } else {
+        right.push_impl(Left, *node);
+      }
     }
 
     return std::make_tuple(left, unpacked, right);

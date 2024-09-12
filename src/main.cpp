@@ -65,6 +65,21 @@ static void ftree_push_consecutive(benchmark::State& state) {
   state.SetComplexityN(state.range(0));
 }
 
+static void ftree_insert(benchmark::State& state) {
+  auto tree = ftree::FingerTree<int, int>();
+
+  for (auto i = 0; i < state.range(0); i++) {
+    tree.push(ftree::Left, i, i);
+  }
+
+  for (auto _ : state) {
+    tree.insert(std::rand() % tree.size(), 0);
+    benchmark::DoNotOptimize(tree);
+  }
+
+  state.SetComplexityN(state.range(0));
+}
+
 static void ftree_concat(benchmark::State& state) {
   auto tree = ftree::FingerTree<int, int>();
 
@@ -97,6 +112,10 @@ BENCHMARK(ftree_get_full)
   ->Complexity(benchmark::oAuto);
 
 BENCHMARK(ftree_push_consecutive)
+  ->Range(2 << 10, 2 << 16)
+  ->Complexity(benchmark::oAuto);
+
+BENCHMARK(ftree_insert)
   ->Range(2 << 10, 2 << 16)
   ->Complexity(benchmark::oAuto);
 
