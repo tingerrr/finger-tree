@@ -93,7 +93,6 @@ namespace ftree::node {
       auto get(const K& key) -> std::optional<Node<K, V>>;
 
     public:
-    public:
       static auto pack_nodes(
         std::span<const Node<K, V>> nodes
       ) -> std::vector<Node<K, V>>;
@@ -160,32 +159,12 @@ namespace ftree::node {
 
   template<typename K, typename V>
   auto Node<K, V>::as_leaf() const -> const Leaf<K, V>* {
-    return std::visit([](auto& repr) {
-      using T = std::decay_t<decltype(repr)>;
-
-      if constexpr (std::is_same_v<T, Deep<K, V>>) {
-        return nullptr;
-      } else if constexpr (std::is_same_v<T, Leaf<K, V>>) {
-        return repr;
-      } else {
-        static_assert(false, "non-exhaustive visitor");
-      }
-    }, this->_repr->_repr);
+    return std::get_if<Leaf<K, V>>(&this->_repr->_repr);
   }
 
   template<typename K, typename V>
   auto Node<K, V>::as_deep() const -> const Deep<K, V>* {
-    return std::visit([](auto& repr) {
-      using T = std::decay_t<decltype(repr)>;
-
-      if constexpr (std::is_same_v<T, Deep<K, V>>) {
-        return repr;
-      } else if constexpr (std::is_same_v<T, Leaf<K, V>>) {
-        return nullptr;
-      } else {
-        static_assert(false, "non-exhaustive visitor");
-      }
-    }, this->_repr->_repr);
+    return std::get_if<Deep<K, V>>(&this->_repr->_repr);
   }
 
   template<typename K, typename V>

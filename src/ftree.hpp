@@ -50,6 +50,10 @@ namespace ftree {
       auto push(Direction dir, K key, V val) -> void;
       auto pop(Direction dir) -> std::optional<std::pair<K, V>>;
 
+      auto as_empty() const -> const Empty<K, V>*;
+      auto as_single() const -> const Single<K, V>*;
+      auto as_deep() const -> const Deep<K, V>*;
+
     private:
       auto get_impl(const K& key) -> std::optional<node::Node<K, V>>;
       auto push_impl(Direction dir, const node::Node<K, V>& node) -> void;
@@ -224,5 +228,20 @@ namespace ftree {
     }
 
     return unpacked;
+  }
+
+  template<typename K, typename V>
+  auto FingerTree<K, V>::as_empty() const -> const Empty<K, V>* {
+    return std::get_if<Empty<K, V>>(&this->_repr->_repr);
+  }
+
+  template<typename K, typename V>
+  auto FingerTree<K, V>::as_single() const -> const Single<K, V>* {
+    return std::get_if<Single<K, V>>(&this->_repr->_repr);
+  }
+
+  template<typename K, typename V>
+  auto FingerTree<K, V>::as_deep() const -> const Deep<K, V>* {
+    return std::get_if<Deep<K, V>>(&this->_repr->_repr);
   }
 }
