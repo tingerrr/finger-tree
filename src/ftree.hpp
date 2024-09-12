@@ -62,7 +62,7 @@ namespace ftree {
     public:
       auto get(const K& key) -> std::optional<V>;
 
-      auto push(Direction dir, K key, V val) -> void;
+      auto push(Direction dir, const K& key, const V& val) -> void;
       auto append(Direction dir, std::span<const std::pair<K, V>> pairs) -> void;
 
       auto pop(Direction dir) -> std::optional<std::pair<K, V>>;
@@ -357,7 +357,7 @@ namespace ftree {
   }
 
   template<typename K, typename V>
-  auto FingerTree<K, V>::push(Direction dir, K key, V val) -> void {
+  auto FingerTree<K, V>::push(Direction dir, const K& key, const V& val) -> void {
     // TODO: validate key invariants
     this->push_impl(dir, node::Node<K, V>(key, val));
   }
