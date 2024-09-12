@@ -1,4 +1,4 @@
-CONFIG -= qt
+#CONFIG -= qt
 #CONFIG += debug
 
 #CONFIG *= addressSanitizer
