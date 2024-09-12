@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <sys/types.h>
 
 #include <span>
@@ -89,6 +90,19 @@ namespace ftree::node {
       auto as_leaf() const -> const Leaf<K, V>*;
       auto as_deep() const -> const Deep<K, V>*;
 
+      auto get(const K& key) -> std::optional<Node<K, V>>;
+
+    public:
+    public:
+      static auto pack_nodes(
+        std::span<const Node<K, V>> nodes
+      ) -> std::vector<Node<K, V>>;
+
+      static auto digit_get(
+        std::span<const Node<K, V>> nodes,
+        const K& key
+      ) -> std::optional<Node<K, V>>;
+
     private:
       std::shared_ptr<Repr> _repr;
   };
@@ -97,14 +111,14 @@ namespace ftree::node {
   Deep<K, V>::Deep(
     const Node<K, V>& a,
     const Node<K, V>& b
-  ) : _children { a, b } {}
+  ) :  _is_two(true), _children { a, b } {}
 
   template<typename K, typename V>
   Deep<K, V>::Deep(
     const Node<K, V>& a,
     const Node<K, V>& b,
     const Node<K, V>& c
-  ) : _children { a, b, c } {}
+  ) :  _is_two(false), _children { a, b, c } {}
 
   template<typename K, typename V>
   Leaf<K, V>::Leaf(const K& key, const V& val) : _key(key), _val(val) {}
@@ -175,6 +189,33 @@ namespace ftree::node {
   }
 
   template<typename K, typename V>
+  auto Node<K, V>::get(const K& key) -> std::optional<Node<K, V>> {
+    return std::visit([this, key](auto& repr) {
+      using T = std::decay_t<decltype(repr)>;
+
+      if constexpr (std::is_same_v<T, Deep<K, V>>) {
+        // NOTE: we only have 2 or 3 children, a linear search suffices
+
+        for (const auto& child : repr.children()) {
+          if (child.key() <= key) {
+            return child.get(key);
+          }
+        }
+
+        return std::optional<Node<K, V>>();
+      } else if constexpr (std::is_same_v<T, Leaf<K, V>>) {
+        if (repr.key() == key) {
+          return std::optional<Node<K, V>>(*this);
+        } else {
+          return std::optional<Node<K, V>>();
+        }
+      } else {
+        static_assert(false, "non-exhaustive visitor");
+      }
+    }, this->_repr->_repr);
+  }
+
+  template<typename K, typename V>
   auto pack_nodes(std::span<const Node<K, V>> nodes) -> std::vector<Node<K, V>> {
     std::vector<Node<K, V>> packed;
 
@@ -198,5 +239,21 @@ namespace ftree::node {
     }
 
     return packed;
+  }
+
+  template<typename K, typename V>
+  auto Node<K, V>::digit_get(
+    std::span<const Node<K, V>> nodes,
+    const K& key
+  ) -> std::optional<Node<K, V>> {
+    // NOTE: we only have between 1 and 4 digits, a linear search suffices
+
+    for (const auto& node : nodes) {
+      if (node.key() <= key) {
+        return node.get(key);
+      }
+    }
+
+    return std::optional<Node<K, V>>();
   }
 }

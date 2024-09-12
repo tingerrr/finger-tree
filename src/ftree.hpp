@@ -46,12 +46,13 @@ namespace ftree {
     public:
       auto key() const -> const K&;
 
-    public:
+      auto get(const K& key) -> std::optional<V>;
       auto push(Direction dir, K key, V val) -> void;
       auto pop(Direction dir) -> std::optional<std::pair<K, V>>;
 
     private:
-      auto push_impl(Direction dir, node::Node<K, V> node) -> void;
+      auto get_impl(const K& key) -> std::optional<node::Node<K, V>>;
+      auto push_impl(Direction dir, const node::Node<K, V>& node) -> void;
       auto pop_impl(Direction dir) -> std::optional<node::Node<K, V>>;
 
       private:
@@ -83,7 +84,39 @@ namespace ftree {
     : _repr(std::make_shared<Repr>(repr)) {}
 
   template<typename K, typename V>
-  auto FingerTree<K, V>::push_impl(Direction dir, node::Node<K, V> node) -> void {
+  auto FingerTree<K, V>::get_impl(const K& key) -> std::optional<node::Node<K, V>> {
+    return std::visit([key](auto& repr) {
+      using T = std::decay_t<decltype(repr)>;
+
+      if constexpr (std::is_same_v<T, Empty<K, V>>) {
+        return std::optional<node::Node<K, V>>();
+      } else if constexpr (std::is_same_v<T, Single<K, V>>) {
+        if (repr.key() <= key) {
+          return repr.node().get(key);
+        } else {
+          return std::optional<node::Node<K, V>>();
+        }
+      } else if constexpr (std::is_same_v<T, Deep<K, V>>) {
+        if (repr.left().back().key() <= key) {
+          return node::Node<K, V>::digit_get(repr.left());
+        } else if (repr.middle().key() <= key) {
+          return repr.middle().get_impl(key);
+        } else if (repr.right().back().key() <= key) {
+          return node::Node<K, V>::digit_get(repr.right());
+        } else {
+          return std::optional<node::Node<K, V>>();
+        }
+      } else {
+        static_assert(false, "non-exhaustive visitor");
+      }
+    }, this->_repr->_repr);
+  }
+
+  template<typename K, typename V>
+  auto FingerTree<K, V>::push_impl(
+    Direction dir,
+    const node::Node<K, V>& node
+  ) -> void {
     std::visit([this, dir, node](auto& repr) {
       using T = std::decay_t<decltype(repr)>;
 
@@ -162,7 +195,21 @@ namespace ftree {
   }
 
   template<typename K, typename V>
+  auto FingerTree<K, V>::get(const K& key) -> std::optional<V> {
+    std::optional<node::Node<K, V>> node = this->get_impl(key);
+    std::optional<std::pair<K, V>> unpacked;
+
+    if (*node) {
+      auto leaf = node.as_leaf();
+      unpacked = std::optional(leaf->val());
+    }
+
+    return unpacked;
+  }
+
+  template<typename K, typename V>
   auto FingerTree<K, V>::push(Direction dir, K key, V val) -> void {
+    // TODO: validate key invariants
     this->push_impl(dir, node::Node<K, V>(key, val));
   }
 
