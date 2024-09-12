@@ -29,13 +29,13 @@ namespace ftree::node {
       auto key() const -> const K& { return this->_key; }
 
       auto children() const -> std::span<const Node<K, V>> {
-        return std::span(this->_children, this->size());
+        return std::span(this->_children);
       }
 
     private:
       bool _is_two;
       K _key;
-      Node<K, V> _children[3];
+      std::vector<Node<K, V>> _children;
   };
 
   template<typename K, typename V>
@@ -202,29 +202,22 @@ namespace ftree::node {
   auto Node<K, V>::show(uint indent) const -> void {
     auto istr = std::string(indent * 2, ' ');
 
-    std::visit([indent, istr](auto& repr) {
+    auto ref_count = this->_repr.use_count();
+
+    std::visit([indent, ref_count, istr](auto& repr) {
       using T = std::decay_t<decltype(repr)>;
 
       if constexpr (std::is_same_v<T, Deep<K, V>>) {
-        std::cout << istr << "<";
-        if (repr.children().front().as_deep()) {
-          std::cout << std::endl;
-        }
+        std::cout << istr << ref_count << " <"  << std::endl;
         for (const auto& child : repr.children()) {
-          if (const auto* leaf = child.as_leaf()) {
-            std::cout << "<" << leaf->key() << ":" << leaf->val() << ">";
-          } else {
-            child.show(indent + 1);
-          }
+          child.show(indent + 1);
         }
-        if (repr.children().front().as_deep()) {
-          std::cout << istr;
-        }
-        std::cout << ">" << std::endl;
+        std::cout << istr << ">" << std::endl;
       } else if constexpr (std::is_same_v<T, Leaf<K, V>>) {
         std::cout
           << istr
-          << "<" << repr.key() << ":" << repr.val() << ">"
+          << ref_count
+          << " <" << repr.key() << ":" << repr.val() << ">"
           << std::endl;
       } else {
         static_assert(false, "non-exhaustive visitor");
@@ -238,23 +231,26 @@ namespace ftree::node {
   ) -> std::vector<Node<K, V>> {
     std::vector<Node<K, V>> packed;
 
-    switch (nodes.len()) {
-      case 0:
-        break;
-      case 2:
-        packed.push_back(Node(Deep(nodes[0], nodes[1])));
-        break;
-      case 3:
-        packed.push_back(Node(Deep(nodes[0], nodes[1], nodes[2])));
-        break;
-      case 4:
-        packed.push_back(Node(Deep(nodes[0], nodes[1])));
-        packed.push_back(Node(Deep(nodes[2], nodes[3])));
-        break;
-      default:
-        packed.push_back(Node(Deep(nodes[0], nodes[1], nodes[2])));
-        nodes = nodes.subspan(3);
-        break;
+    while (nodes.size() != 0) {
+      switch (nodes.size()) {
+        case 2:
+          packed.push_back(Node(Deep(nodes[0], nodes[1])));
+          nodes = nodes.subspan(2);
+          break;
+        case 3:
+          packed.push_back(Node(Deep(nodes[0], nodes[1], nodes[2])));
+          nodes = nodes.subspan(3);
+          break;
+        case 4:
+          packed.push_back(Node(Deep(nodes[0], nodes[1])));
+          packed.push_back(Node(Deep(nodes[2], nodes[3])));
+          nodes = nodes.subspan(4);
+          break;
+        default:
+          packed.push_back(Node(Deep(nodes[0], nodes[1], nodes[2])));
+          nodes = nodes.subspan(3);
+          break;
+      }
     }
 
     return packed;
