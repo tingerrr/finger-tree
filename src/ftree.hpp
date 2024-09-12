@@ -6,8 +6,10 @@
 #include "src/ftree/node.hpp"
 #include "src/ftree/single.hpp"
 
+#include <iostream>
 #include <memory>
 #include <optional>
+#include <string>
 #include <variant>
 
 namespace ftree {
@@ -53,6 +55,9 @@ namespace ftree {
       auto as_empty() const -> const Empty<K, V>*;
       auto as_single() const -> const Single<K, V>*;
       auto as_deep() const -> const Deep<K, V>*;
+
+    public:
+      auto show(uint indent) const -> void;
 
     private:
       auto get_impl(const K& key) -> std::optional<node::Node<K, V>>;
@@ -243,5 +248,39 @@ namespace ftree {
   template<typename K, typename V>
   auto FingerTree<K, V>::as_deep() const -> const Deep<K, V>* {
     return std::get_if<Deep<K, V>>(&this->_repr->_repr);
+  }
+
+  template<typename K, typename V>
+  auto FingerTree<K, V>::show(uint indent) const -> void {
+    auto istr = std::string(indent * 2, ' ');
+    auto istr2 = std::string((indent + 1) * 2, ' ');
+
+    std::visit([indent, &istr, &istr2](auto& repr) {
+      using T = std::decay_t<decltype(repr)>;
+
+      if constexpr (std::is_same_v<T, Empty<K, V>>) {
+        std::cout << istr << "Empty" << std::endl;
+      } else if constexpr (std::is_same_v<T, Single<K, V>>) {
+        std::cout << istr << "Single" << std::endl;
+        repr.node().show(indent + 1);
+      } else if constexpr (std::is_same_v<T, Deep<K, V>>) {
+        std::cout << istr << "Deep" << std::endl;
+        std::cout << istr2 << "[" << std::endl;
+        for (const auto& node : repr.left()) {
+          node.show(indent + 2);
+        }
+        std::cout << istr2 << "]" << std::endl;
+
+        repr.middle().show(indent + 1);
+
+        std::cout << istr2 << "[" << std::endl;
+        for (const auto& node : repr.right()) {
+          node.show(indent + 2);
+        }
+        std::cout << istr2 << "]" << std::endl;
+      } else {
+        static_assert(false, "non-exhaustive visitor");
+      }
+    }, this->_repr->_repr);
   }
 }

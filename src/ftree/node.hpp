@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <optional>
 #include <sys/types.h>
 
@@ -91,6 +92,9 @@ namespace ftree::node {
       auto as_deep() const -> const Deep<K, V>*;
 
       auto get(const K& key) -> std::optional<Node<K, V>>;
+
+    public:
+      auto show(uint indent) const -> void;
 
     public:
       static auto pack_nodes(
@@ -195,7 +199,43 @@ namespace ftree::node {
   }
 
   template<typename K, typename V>
-  auto pack_nodes(std::span<const Node<K, V>> nodes) -> std::vector<Node<K, V>> {
+  auto Node<K, V>::show(uint indent) const -> void {
+    auto istr = std::string(indent * 2, ' ');
+
+    std::visit([indent, istr](auto& repr) {
+      using T = std::decay_t<decltype(repr)>;
+
+      if constexpr (std::is_same_v<T, Deep<K, V>>) {
+        std::cout << istr << "<";
+        if (repr.children().front().as_deep()) {
+          std::cout << std::endl;
+        }
+        for (const auto& child : repr.children()) {
+          if (const auto* leaf = child.as_leaf()) {
+            std::cout << "<" << leaf->key() << ":" << leaf->val() << ">";
+          } else {
+            child.show(indent + 1);
+          }
+        }
+        if (repr.children().front().as_deep()) {
+          std::cout << istr;
+        }
+        std::cout << ">" << std::endl;
+      } else if constexpr (std::is_same_v<T, Leaf<K, V>>) {
+        std::cout
+          << istr
+          << "<" << repr.key() << ":" << repr.val() << ">"
+          << std::endl;
+      } else {
+        static_assert(false, "non-exhaustive visitor");
+      }
+    }, this->_repr->_repr);
+  }
+
+  template<typename K, typename V>
+  auto Node<K, V>::pack_nodes(
+    std::span<const Node<K, V>> nodes
+  ) -> std::vector<Node<K, V>> {
     std::vector<Node<K, V>> packed;
 
     switch (nodes.len()) {
