@@ -1,7 +1,6 @@
 #pragma once
 
 #include "src/ftree/core.hpp"
-#include "src/ftree/empty.hpp"
 #include "src/ftree/deep.hpp"
 #include "src/ftree/node.hpp"
 #include "src/ftree/single.hpp"
@@ -19,7 +18,7 @@ namespace ftree {
     private:
       class Repr {
         public:
-          using Variant = std::variant<Empty<K, V>, Single<K, V>, Deep<K, V>>;
+          using Variant = std::variant<Single<K, V>, Deep<K, V>>;
 
         public:
           Repr() = delete;
@@ -28,7 +27,6 @@ namespace ftree {
           Repr(Repr&& other) = delete;
 
         public:
-          Repr(const Empty<K, V>& repr);
           Repr(const Single<K, V>& repr);
           Repr(const Deep<K, V>& repr);
 
@@ -42,7 +40,6 @@ namespace ftree {
       static auto from(std::span<const std::pair<K, V>> nodes) -> FingerTree<K, V>;
 
     private:
-      FingerTree(const Empty<K, V>& repr);
       FingerTree(const Single<K, V>& repr);
       FingerTree(const Deep<K, V>& repr);
 
@@ -59,11 +56,10 @@ namespace ftree {
     public:
       auto size() const -> uint;
 
-      auto as_empty() const -> const Empty<K, V>*;
       auto as_single() const -> const Single<K, V>*;
       auto as_deep() const -> const Deep<K, V>*;
 
-      auto is_empty() const -> bool { return this->as_empty() != nullptr; };
+      auto is_empty() const -> bool { return this->_repr == nullptr; };
       auto is_single() const -> bool { return this->as_single() != nullptr; };
       auto is_deep() const -> bool { return this->as_deep() != nullptr; };
 
@@ -120,9 +116,6 @@ namespace ftree {
   };
 
   template<typename K, typename V>
-  FingerTree<K, V>::Repr::Repr(const Empty<K, V>& repr) : _repr(Repr::Variant(repr)) {}
-
-  template<typename K, typename V>
   FingerTree<K, V>::Repr::Repr(const Deep<K, V>& repr) : _repr(Repr::Variant(repr)) {}
 
   template<typename K, typename V>
@@ -132,7 +125,7 @@ namespace ftree {
   // public constructors and consturctor functions
   //
   template<typename K, typename V>
-  FingerTree<K, V>::FingerTree() : FingerTree(Empty<K, V>()) {}
+  FingerTree<K, V>::FingerTree() : _repr(nullptr) {}
 
   template<typename K, typename V>
   auto from(std::span<const std::pair<K, V>> pairs) -> FingerTree<K, V> {
@@ -149,10 +142,6 @@ namespace ftree {
   //
   // private constructors and consturctor functions
   //
-  template<typename K, typename V>
-  FingerTree<K, V>::FingerTree(const Empty<K, V>& repr)
-    : _repr(std::make_shared<Repr>(repr)) {}
-
   template<typename K, typename V>
   FingerTree<K, V>::FingerTree(const Single<K, V>& repr)
     : _repr(std::make_shared<Repr>(repr)) {}
@@ -225,47 +214,43 @@ namespace ftree {
   }
 
   template<typename K, typename V>
-  auto FingerTree<K, V>::as_empty() const -> const Empty<K, V>* {
-    return std::get_if<Empty<K, V>>(&this->_repr->_repr);
-  }
-
-  template<typename K, typename V>
   auto FingerTree<K, V>::as_single() const -> const Single<K, V>* {
-    return std::get_if<Single<K, V>>(&this->_repr->_repr);
+    return this->is_empty()
+      ? nullptr
+      : std::get_if<Single<K, V>>(&this->_repr->_repr);
   }
 
   template<typename K, typename V>
   auto FingerTree<K, V>::as_deep() const -> const Deep<K, V>* {
-    return std::get_if<Deep<K, V>>(&this->_repr->_repr);
+    return this->is_empty()
+      ? nullptr
+      : std::get_if<Deep<K, V>>(&this->_repr->_repr);
   }
 
   template<typename K, typename V>
   auto FingerTree<K, V>::get_impl(const K& key) -> std::optional<node::Node<K, V>> {
-    return std::visit([key](auto& repr) {
-      using T = std::decay_t<decltype(repr)>;
+    if (this->is_empty()) {
+      return std::optional<node::Node<K, V>>();
+    }
 
-      if constexpr (std::is_same_v<T, Empty<K, V>>) {
-        return std::optional<node::Node<K, V>>();
-      } else if constexpr (std::is_same_v<T, Single<K, V>>) {
-        if (repr.key() <= key) {
-          return repr.node().get(key);
-        } else {
-          return std::optional<node::Node<K, V>>();
-        }
-      } else if constexpr (std::is_same_v<T, Deep<K, V>>) {
-        if (repr.left().back().key() <= key) {
-          return node::Node<K, V>::digit_get(repr.left());
-        } else if (repr.middle().key() <= key) {
-          return repr.middle().get_impl(key);
-        } else if (repr.right().back().key() <= key) {
-          return node::Node<K, V>::digit_get(repr.right());
-        } else {
-          return std::optional<node::Node<K, V>>();
-        }
+    if (const auto* single = this->as_single()) {
+      if (single->key() <= key) {
+        return single->node().get(key);
       } else {
-        static_assert(false, "non-exhaustive visitor");
+        return std::optional<node::Node<K, V>>();
       }
-    }, this->_repr->_repr);
+    }
+
+    const auto* deep = this->as_deep();
+    if (deep->left().back().key() <= key) {
+      return node::Node<K, V>::digit_get(deep->left());
+    } else if (deep->middle().key() <= key) {
+      return deep->middle().get_impl(key);
+    } else if (deep->right().back().key() <= key) {
+      return node::Node<K, V>::digit_get(deep->right());
+    } else {
+      return std::optional<node::Node<K, V>>();
+    }
   }
 
   template<typename K, typename V>
@@ -273,61 +258,60 @@ namespace ftree {
     Direction dir,
     const node::Node<K, V>& node
   ) -> void {
-    std::visit([this, dir, node](auto& repr) {
-      using T = std::decay_t<decltype(repr)>;
+    if (this->is_empty()) {
+      this->_repr = std::make_shared<Repr>(Single(node));
+      return;
+    }
 
-      if constexpr (std::is_same_v<T, Empty<K, V>>) {
-        this->_repr = std::make_shared<Repr>(Single(node));
-      } else if constexpr (std::is_same_v<T, Single<K, V>>) {
-        node::Node<K, V> single = repr.node();
+    if (const auto* single = this->as_single()) {
+      node::Node<K, V> other = single->node();
 
-        switch (dir) {
-          case Left:
-            this->_repr = std::make_shared<Repr>(Deep<K, V>({ node }, { single }));
-            break;
-          case Right:
-            this->_repr = std::make_shared<Repr>(Deep<K, V>({ single }, { node }));
-            break;
-        }
-      } else if constexpr (std::is_same_v<T, Deep<K, V>>) {
-        std::vector<node::Node<K, V>> left(repr.left().begin(), repr.left().end());
-        std::vector<node::Node<K, V>> right(repr.right().begin(), repr.right().end());
-        FingerTree<K, V> middle = repr.middle();
-
-        switch (dir) {
-          case Left:
-            left.insert(left.begin(), node);
-
-            if (left.size() > 4) {
-              middle.push_impl(
-                dir,
-                node::Node<K, V>(left[2], left[3], left[4])
-              );
-              left = { left[0], left[1] };
-            }
-            break;
-          case Right:
-            right.push_back(node);
-
-            if (right.size() > 4) {
-              middle.push_impl(
-                dir,
-                node::Node<K, V>(right[0], right[1], right[2])
-              );
-              right = { right[3], right[4] };
-            }
-            break;
-        }
-
-        this->_repr = std::make_shared<Repr>(Deep<K, V>(
-          std::move(left),
-          middle,
-          std::move(right))
-        );
-      } else {
-        static_assert(false, "non-exhaustive visitor");
+      switch (dir) {
+        case Left:
+          this->_repr = std::make_shared<Repr>(Deep<K, V>({ node }, { other }));
+          return;
+        case Right:
+          this->_repr = std::make_shared<Repr>(Deep<K, V>({ other  }, { node }));
+          return;
       }
-    }, this->_repr->_repr);
+    }
+
+    const auto* deep = this->as_deep();
+
+    std::vector<node::Node<K, V>> left(deep->left().begin(), deep->left().end());
+    std::vector<node::Node<K, V>> right(deep->right().begin(), deep->right().end());
+    FingerTree<K, V> middle = deep->middle();
+
+    switch (dir) {
+      case Left:
+        left.insert(left.begin(), node);
+
+        if (left.size() > 4) {
+          middle.push_impl(
+            dir,
+            node::Node<K, V>(left[2], left[3], left[4])
+          );
+          left = { left[0], left[1] };
+        }
+        break;
+      case Right:
+        right.push_back(node);
+
+        if (right.size() > 4) {
+          middle.push_impl(
+            dir,
+            node::Node<K, V>(right[0], right[1], right[2])
+          );
+          right = { right[3], right[4] };
+        }
+        break;
+    }
+
+    this->_repr = std::make_shared<Repr>(Deep<K, V>(
+      std::move(left),
+      middle,
+      std::move(right))
+    );
   }
 
   template<typename K, typename V>
@@ -362,121 +346,118 @@ namespace ftree {
 
   template<typename K, typename V>
   auto FingerTree<K, V>::pop_impl(Direction dir) -> std::optional<node::Node<K, V>> {
-    return std::visit([this, dir](auto& repr) {
-      using T = std::decay_t<decltype(repr)>;
+    if (this->is_empty()) {
+      return std::optional<node::Node<K, V>>();
+    }
 
-      if constexpr (std::is_same_v<T, Empty<K, V>>) {
-        this->_repr = std::make_shared<Repr>(Empty<K, V>());
-        return std::optional<node::Node<K, V>>();
-      } else if constexpr (std::is_same_v<T, Single<K, V>>) {
-        this->_repr = std::make_shared<Repr>(Empty<K, V>());
-        return std::optional<node::Node<K, V>>(repr.node());
-      } else if constexpr (std::is_same_v<T, Deep<K, V>>) {
-        std::vector<node::Node<K, V>> left(repr.left().begin(), repr.left().end());
-        std::vector<node::Node<K, V>> right(repr.right().begin(), repr.right().end());
-        FingerTree<K, V> middle = repr.middle();
+    if (const auto* single = this->as_single()) {
+      this->_repr = nullptr;
+      return std::optional<node::Node<K, V>>(single->node());
+    }
 
-        std::optional<node::Node<K, V>> node;
+    const auto* deep = this->as_deep();
 
-        switch (dir) {
-          case Left:
-            node = std::optional(left.front());
-            left.erase(left.begin());
-            if (left.size() > 0) {
-              this->_repr = std::make_shared<Repr>(Deep(
-                std::move(left),
-                middle,
-                std::move(right))
-              );
-              return node;
-            }
-            break;
-          case Right:
-            node = std::optional(right.back());
-            right.pop_back();
-            if (right.size() > 0) {
-              this->_repr = std::make_shared<Repr>(Deep(
-                std::move(left),
-                middle,
-                std::move(right))
-              );
-              return node;
-            }
-            break;
-        }
+    std::vector<node::Node<K, V>> left(deep->left().begin(), deep->left().end());
+    std::vector<node::Node<K, V>> right(deep->right().begin(), deep->right().end());
+    FingerTree<K, V> middle = deep->middle();
 
-        // NOTE: left/right is empty after taking out a node, we need to either
-        // take from the other side or the middle
-        if (middle.is_empty()) {
-          switch (dir) {
-            case Left:
-              if (right.size() == 1) {
-                this->_repr = std::make_shared<Repr>(Single(right.front()));
-              } else {
-                for (
-                  auto it = right.begin(); it != right.begin() + right.size() / 2; it++
-                ) {
-                  left.push_back(*it);
-                }
-                right.erase(right.begin(), right.begin() + right.size() / 2);
-                this->_repr = std::make_shared<Repr>(Deep(
-                  std::move(left),
-                  middle,
-                  std::move(right))
-                );
-              }
-              break;
-            case Right:
-              if (left.size() == 1) {
-                this->_repr = std::make_shared<Repr>(Single(left.back()));
-              } else {
-                for (
-                  auto it = --left.end(); it != left.begin() + left.size() / 2 - 1; it--
-                ) {
-                  right.insert(right.begin(), *it);
-                }
-                left.erase(left.begin() + left.size() / 2, left.end());
-                this->_repr = std::make_shared<Repr>(Deep(
-                  std::move(left),
-                  middle,
-                  std::move(right))
-                );
-              }
-              break;
-          }
-        } else {
-          // NOTE: we know this is deep because a middle tree cannot have leaf
-          // nodes
-          node::Node<K, V> underflow = *middle.pop_impl(dir);
+    std::optional<node::Node<K, V>> node;
 
-          switch (dir) {
-            case Left:
-              for (const auto& child : underflow.as_deep()->children()) {
-                left.push_back(child);
-              }
-              break;
-            case Right:
-              for (
-                auto it = underflow.as_deep()->children().rbegin();
-                it != underflow.as_deep()->children().rend();
-                it++
-              ) {
-                right.insert(right.begin(), *it);
-              }
-              break;
-          }
-
+    switch (dir) {
+      case Left:
+        node = std::optional(left.front());
+        left.erase(left.begin());
+        if (left.size() > 0) {
           this->_repr = std::make_shared<Repr>(Deep(
             std::move(left),
             middle,
             std::move(right))
           );
+          return node;
         }
-        return node;
-      } else {
-        static_assert(false, "non-exhaustive visitor");
+        break;
+      case Right:
+        node = std::optional(right.back());
+        right.pop_back();
+        if (right.size() > 0) {
+          this->_repr = std::make_shared<Repr>(Deep(
+            std::move(left),
+            middle,
+            std::move(right))
+          );
+          return node;
+        }
+        break;
+    }
+
+    // NOTE: left/right is empty after taking out a node, we need to either
+    // take from the other side or the middle
+    if (middle.is_empty()) {
+      switch (dir) {
+        case Left:
+          if (right.size() == 1) {
+            this->_repr = std::make_shared<Repr>(Single(right.front()));
+          } else {
+            for (
+              auto it = right.begin(); it != right.begin() + right.size() / 2; it++
+            ) {
+              left.push_back(*it);
+            }
+            right.erase(right.begin(), right.begin() + right.size() / 2);
+            this->_repr = std::make_shared<Repr>(Deep(
+              std::move(left),
+              middle,
+              std::move(right))
+            );
+          }
+          break;
+        case Right:
+          if (left.size() == 1) {
+            this->_repr = std::make_shared<Repr>(Single(left.back()));
+          } else {
+            for (
+              auto it = --left.end(); it != left.begin() + left.size() / 2 - 1; it--
+            ) {
+              right.insert(right.begin(), *it);
+            }
+            left.erase(left.begin() + left.size() / 2, left.end());
+            this->_repr = std::make_shared<Repr>(Deep(
+              std::move(left),
+              middle,
+              std::move(right))
+            );
+          }
+          break;
       }
-    }, this->_repr->_repr);
+    } else {
+      // NOTE: we know this is deep because a middle tree cannot have leaf
+      // nodes
+      node::Node<K, V> underflow = *middle.pop_impl(dir);
+
+      switch (dir) {
+        case Left:
+          for (const auto& child : underflow.as_deep()->children()) {
+            left.push_back(child);
+          }
+          break;
+        case Right:
+          for (
+            auto it = underflow.as_deep()->children().rbegin();
+            it != underflow.as_deep()->children().rend();
+            it++
+          ) {
+            right.insert(right.begin(), *it);
+          }
+          break;
+      }
+
+      this->_repr = std::make_shared<Repr>(Deep(
+        std::move(left),
+        middle,
+        std::move(right))
+      );
+    }
+    return node;
   }
 
   template<typename K, typename V>
@@ -785,32 +766,31 @@ namespace ftree {
 
     auto ref_count = this->_repr.use_count();
 
-    std::visit([indent, ref_count, &istr, &istr2](auto& repr) {
-      using T = std::decay_t<decltype(repr)>;
+    if (this->is_empty()) {
+      std::cout << istr << ref_count << " Empty" << std::endl;
+      return;
+    }
 
-      if constexpr (std::is_same_v<T, Empty<K, V>>) {
-        std::cout << istr << ref_count << " Empty" << std::endl;
-      } else if constexpr (std::is_same_v<T, Single<K, V>>) {
-        std::cout << istr << ref_count << " Single" << std::endl;
-        repr.node().show(indent + 1);
-      } else if constexpr (std::is_same_v<T, Deep<K, V>>) {
-        std::cout << istr << ref_count << " Deep" << std::endl;
-        std::cout << istr2 << "Left [" << std::endl;
-        for (const auto& node : repr.left()) {
-          node.show(indent + 2);
-        }
-        std::cout << istr2 << "]" << std::endl;
+    if (const auto* single = this->as_single()) {
+      std::cout << istr << ref_count << " Single" << std::endl;
+      single->node().show(indent + 1);
+    }
 
-        repr.middle().show(indent + 1);
+    const auto* deep = this->as_deep();
 
-        std::cout << istr2 << "Right [" << std::endl;
-        for (const auto& node : repr.right()) {
-          node.show(indent + 2);
-        }
-        std::cout << istr2 << "]" << std::endl;
-      } else {
-        static_assert(false, "non-exhaustive visitor");
-      }
-    }, this->_repr->_repr);
+    std::cout << istr << ref_count << " Deep" << std::endl;
+    std::cout << istr2 << "Left [" << std::endl;
+    for (const auto& node : deep->left()) {
+      node.show(indent + 2);
+    }
+    std::cout << istr2 << "]" << std::endl;
+
+    deep->middle().show(indent + 1);
+
+    std::cout << istr2 << "Right [" << std::endl;
+    for (const auto& node : deep->right()) {
+      node.show(indent + 2);
+    }
+    std::cout << istr2 << "]" << std::endl;
   }
 }
