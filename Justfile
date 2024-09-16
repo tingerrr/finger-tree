@@ -18,6 +18,10 @@ run: build
 debug: build
     gdb ./out/main
 
+# run and profile the project
+profile: build
+    cd out; valgrind --tool=callgrind ./main
+
 # force rebuild the project
 force-build: clean
     bear -- make

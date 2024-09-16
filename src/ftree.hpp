@@ -138,6 +138,8 @@ namespace ftree {
   auto from(std::span<const std::pair<K, V>> pairs) -> FingerTree<K, V> {
     // TODO: ensure invariants
     std::vector<node::Node<K, V>> nodes;
+    nodes.reserve(pairs.size());
+
     for (const auto& [k, v] : pairs) {
       nodes.push_back(nodes);
     }
@@ -458,9 +460,12 @@ namespace ftree {
     Direction dir,
     uint count
   ) -> std::vector<node::Node<K, V>> {
-    std::vector<node::Node<K, V>> nodes;
+    uint min = std::min(count, this->size());
 
-    for (uint i = 0; i < std::min(count, this->size()); i++) {
+    std::vector<node::Node<K, V>> nodes;
+    nodes.reserve(min );
+
+    for (uint i = 0; i < min; i++) {
       nodes.push_back(this->pop_impl(dir));
     }
 
@@ -497,9 +502,17 @@ namespace ftree {
     }
 
     if (const auto* single = this->as_single()) {
+      if (single->node().key() >= key) {
+        return std::tuple(
+          FingerTree(),
+          std::optional(single->node()),
+          FingerTree()
+        );
+      }
+
       return std::tuple(
-        FingerTree(),
-        std::optional(single->node()),
+        *this,
+        std::optional<node::Node<K, V>>(),
         FingerTree()
       );
     }
@@ -575,7 +588,12 @@ namespace ftree {
       const Deep<K, V>* left_deep = left_copy.as_deep();
       const Deep<K, V>* right_deep = right_copy.as_deep();
 
+      // TODO: this vector can be used as in- and output by packing nodes in place
       std::vector<node::Node<K, V>> concat;
+      concat.reserve(
+        left_deep->right().size() + middle.size() + right_deep->left().size()
+      );
+
       for (const auto& node : left_deep->right()) {
         concat.push_back(node);
       }
@@ -671,9 +689,12 @@ namespace ftree {
     Direction dir,
     uint count
   ) -> std::vector<std::pair<K, V>> {
-    std::vector<std::pair<K, V>> pairs;
+    uint min = std::min(count, this->size());
 
-    for (uint i = 0; i < std::min(count, this->size()); i++) {
+    std::vector<std::pair<K, V>> pairs;
+    pairs.reserve(min);
+
+    for (uint i = 0; i < min; i++) {
       pairs.push_back(this->pop(dir));
     }
 

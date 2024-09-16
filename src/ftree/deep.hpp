@@ -55,10 +55,14 @@ namespace ftree {
     const std::vector<node::Node<K, V>>& right
   ) : _left(left), _middle(middle), _right(right) {
     for (const node::Node<K, V>& node : left) {
+    this->_left.reserve(4);
+    this->_right.reserve(4);
+
+    for (const node::Node<K, V>& node : this->_left) {
       this->_size += node.size();
     }
     this->_size += this->_middle.size();
-    for (const node::Node<K, V>& node : left) {
+    for (const node::Node<K, V>& node : this->_right) {
       this->_size += node.size();
     }
   }
