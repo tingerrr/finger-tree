@@ -16,17 +16,19 @@ namespace ftree::node {
       Deep(const Node<K, V>& a, const Node<K, V>& b, const Node<K, V>& c);
 
     public:
+      auto size() const -> uint { return this->_size; }
+
       auto key() const -> const K& { return this->_key; }
 
       auto is_two() const -> bool { return this->size() == 2; }
       auto is_three() const -> bool { return this->size() == 3; }
-      auto size() const -> uint { return this->_children.size(); }
 
       auto children() const -> std::span<const Node<K, V>> {
         return std::span(this->_children);
       }
 
     private:
+      uint _size;
       K _key;
       std::vector<Node<K, V>> _children;
   };
@@ -35,12 +37,12 @@ namespace ftree::node {
   Deep<K, V>::Deep(
     const Node<K, V>& a,
     const Node<K, V>& b
-  ) : _key(b.key()), _children { a, b } {}
+  ) : _size(a.size() + b.size()), _key(b.key()), _children { a, b } {}
 
   template<typename K, typename V>
   Deep<K, V>::Deep(
     const Node<K, V>& a,
     const Node<K, V>& b,
     const Node<K, V>& c
-  ) : _key(c.key()), _children { a, b, c } {}
+  ) : _size(a.size() + b.size() + c.size()), _key(c.key()), _children { a, b, c } {}
 }

@@ -47,6 +47,8 @@ namespace ftree::node {
       Node(const Node<K, V>& a, const Node<K, V>& b, const Node<K, V>& c);
 
     public:
+      auto size() const -> uint;
+
       auto key() const -> const K&;
 
       auto as_leaf() const -> const Leaf<K, V>*;
@@ -109,6 +111,15 @@ namespace ftree::node {
     const Node<K, V>& b,
     const Node<K, V>& c
   ) : Node(Deep(a, b, c)) {}
+
+  template<typename K, typename V>
+  auto Node<K, V>::size() const -> uint {
+    if (const auto* deep = this->as_deep()) {
+      return deep->size();
+    } else {
+      return this->as_leaf()->size();
+    }
+  }
 
   template<typename K, typename V>
   auto Node<K, V>::key() const -> const K& {

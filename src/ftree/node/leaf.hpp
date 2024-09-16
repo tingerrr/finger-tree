@@ -2,6 +2,8 @@
 
 #include "src/ftree/node/core.hpp"
 
+#include <sys/types.h>
+
 namespace ftree::node {
   template<typename K, typename V>
   class Leaf {
@@ -11,6 +13,8 @@ namespace ftree::node {
       Leaf(const K& key, const V& val);
 
     public:
+      auto size() const -> uint { return 1; }
+
       auto key() const -> const K& { return this->_key; }
       auto val() const -> const V& { return this->_val; }
 

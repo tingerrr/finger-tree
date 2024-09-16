@@ -211,7 +211,15 @@ namespace ftree {
   //
   template<typename K, typename V>
   auto FingerTree<K, V>::size() const -> uint {
-    return 0;
+    if (this->is_empty()) {
+      return 0;
+    }
+
+    if (const auto* single = this->as_single()) {
+      return single->node().size();
+    }
+
+    return this->as_deep()->size();
   }
 
   template<typename K, typename V>
