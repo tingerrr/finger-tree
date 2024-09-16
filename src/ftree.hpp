@@ -205,7 +205,7 @@ namespace ftree {
       }
     }
 
-    return FingerTree(Deep(left_copy, middle_copy, right_copy));
+    return FingerTree(Deep(std::move(left_copy), middle_copy, std::move(right_copy)));
   }
 
   //
@@ -319,7 +319,11 @@ namespace ftree {
             break;
         }
 
-        this->_repr = std::make_shared<Repr>(Deep<K, V>(left, middle, right));
+        this->_repr = std::make_shared<Repr>(Deep<K, V>(
+          std::move(left),
+          middle,
+          std::move(right))
+        );
       } else {
         static_assert(false, "non-exhaustive visitor");
       }
@@ -379,7 +383,11 @@ namespace ftree {
             node = std::optional(left.front());
             left.erase(left.begin());
             if (left.size() > 0) {
-              this->_repr = std::make_shared<Repr>(Deep(left, middle, right));
+              this->_repr = std::make_shared<Repr>(Deep(
+                std::move(left),
+                middle,
+                std::move(right))
+              );
               return node;
             }
             break;
@@ -387,7 +395,11 @@ namespace ftree {
             node = std::optional(right.back());
             right.pop_back();
             if (right.size() > 0) {
-              this->_repr = std::make_shared<Repr>(Deep(left, middle, right));
+              this->_repr = std::make_shared<Repr>(Deep(
+                std::move(left),
+                middle,
+                std::move(right))
+              );
               return node;
             }
             break;
@@ -407,7 +419,11 @@ namespace ftree {
                   left.push_back(*it);
                 }
                 right.erase(right.begin(), right.begin() + right.size() / 2);
-                this->_repr = std::make_shared<Repr>(Deep(left, middle, right));
+                this->_repr = std::make_shared<Repr>(Deep(
+                  std::move(left),
+                  middle,
+                  std::move(right))
+                );
               }
               break;
             case Right:
@@ -420,7 +436,11 @@ namespace ftree {
                   right.insert(right.begin(), *it);
                 }
                 left.erase(left.begin() + left.size() / 2, left.end());
-                this->_repr = std::make_shared<Repr>(Deep(left, middle, right));
+                this->_repr = std::make_shared<Repr>(Deep(
+                  std::move(left),
+                  middle,
+                  std::move(right))
+                );
               }
               break;
           }
@@ -446,7 +466,11 @@ namespace ftree {
               break;
           }
 
-          this->_repr = std::make_shared<Repr>(Deep(left, middle, right));
+          this->_repr = std::make_shared<Repr>(Deep(
+            std::move(left),
+            middle,
+            std::move(right))
+          );
         }
         return node;
       } else {
@@ -611,13 +635,13 @@ namespace ftree {
       );
 
       return FingerTree(Deep<K, V>(
-        std::vector(left_deep->left().begin(), left_deep->left().end()),
+        std::move(std::vector(left_deep->left().begin(), left_deep->left().end())),
         FingerTree<K, V>::concat_impl(
           left_deep->middle(),
           std::span(packed),
           right_deep->middle()
         ),
-        std::vector(right_deep->right().begin(), right_deep->right().end())
+        std::move(std::vector(right_deep->right().begin(), right_deep->right().end()))
       ));
     }
   }

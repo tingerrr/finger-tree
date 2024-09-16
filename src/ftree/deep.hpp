@@ -13,13 +13,13 @@ namespace ftree {
       Deep() = delete;
 
       Deep(
-        const std::vector<node::Node<K, V>>& left,
-        const std::vector<node::Node<K, V>>& right
+        std::vector<node::Node<K, V>>&& left,
+        std::vector<node::Node<K, V>>&& right
       );
       Deep(
-        const std::vector<node::Node<K, V>>& left,
+        std::vector<node::Node<K, V>>&& left,
         const FingerTree<K, V>& middle,
-        const std::vector<node::Node<K, V>>& right
+        std::vector<node::Node<K, V>>&& right
       );
 
     public:
@@ -44,17 +44,16 @@ namespace ftree {
 
   template<typename K, typename V>
   Deep<K, V>::Deep(
-    const std::vector<node::Node<K, V>>& left,
-    const std::vector<node::Node<K, V>>& right
-  ) : Deep(left, FingerTree<K, V>(), right) {}
+    std::vector<node::Node<K, V>>&& left,
+    std::vector<node::Node<K, V>>&& right
+  ) : Deep(std::move(left), FingerTree<K, V>(), std::move(right)) {}
 
   template<typename K, typename V>
   Deep<K, V>::Deep(
-    const std::vector<node::Node<K, V>>& left,
+    std::vector<node::Node<K, V>>&& left,
     const FingerTree<K, V>& middle,
-    const std::vector<node::Node<K, V>>& right
-  ) : _left(left), _middle(middle), _right(right) {
-    for (const node::Node<K, V>& node : left) {
+    std::vector<node::Node<K, V>>&& right
+  ) : _left(std::move(left)), _middle(middle), _right(std::move(right)) {
     this->_left.reserve(4);
     this->_right.reserve(4);
 
