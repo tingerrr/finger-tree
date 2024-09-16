@@ -28,8 +28,8 @@ namespace ftree::node {
           Repr(Repr&& other) = delete;
 
         public:
-          Repr(Deep<K, V> repr);
-          Repr(Leaf<K, V> repr);
+          Repr(Deep<K, V>&& repr);
+          Repr(Leaf<K, V>&& repr);
 
         public:
           Variant _repr;
@@ -39,8 +39,8 @@ namespace ftree::node {
       Node() = delete;
 
     public:
-      Node(Deep<K, V> repr);
-      Node(Leaf<K, V> repr);
+      Node(Deep<K, V>&& repr);
+      Node(Leaf<K, V>&& repr);
 
       Node(const K& key, const V& val);
       Node(const Node<K, V>& a, const Node<K, V>& b);
@@ -83,18 +83,18 @@ namespace ftree::node {
   };
 
   template<typename K, typename V>
-  Node<K, V>::Repr::Repr(Deep<K, V> repr) : _repr(repr) {}
+  Node<K, V>::Repr::Repr(Deep<K, V>&& repr) : _repr(std::move(repr)) {}
 
   template<typename K, typename V>
-  Node<K, V>::Repr::Repr(Leaf<K, V> repr) : _repr(repr) {}
+  Node<K, V>::Repr::Repr(Leaf<K, V>&& repr) : _repr(std::move(repr)) {}
 
   template<typename K, typename V>
-  Node<K, V>::Node(Deep<K, V> repr)
-    : _repr(std::make_shared<Repr>(repr)) {}
+  Node<K, V>::Node(Deep<K, V>&& repr)
+    : _repr(std::make_shared<Repr>(std::move(repr))) {}
 
   template<typename K, typename V>
-  Node<K, V>::Node(Leaf<K, V> repr)
-    : _repr(std::make_shared<Repr>(repr)) {}
+  Node<K, V>::Node(Leaf<K, V>&& repr)
+    : _repr(std::make_shared<Repr>(std::move(repr))) {}
 
   template<typename K, typename V>
   Node<K, V>::Node(const K& key, const V& val) : Node(Leaf(key, val)) {}

@@ -18,7 +18,7 @@ namespace ftree {
       );
       Deep(
         std::vector<node::Node<K, V>>&& left,
-        const FingerTree<K, V>& middle,
+        FingerTree<K, V>&& middle,
         std::vector<node::Node<K, V>>&& right
       );
 
@@ -51,7 +51,7 @@ namespace ftree {
   template<typename K, typename V>
   Deep<K, V>::Deep(
     std::vector<node::Node<K, V>>&& left,
-    const FingerTree<K, V>& middle,
+    FingerTree<K, V>&& middle,
     std::vector<node::Node<K, V>>&& right
   ) : _left(std::move(left)), _middle(middle), _right(std::move(right)) {
     // NOTE: we alloc one more for the overflow to avoid reallocs there
