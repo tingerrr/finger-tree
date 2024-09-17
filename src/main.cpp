@@ -16,6 +16,7 @@ static void qmap_get(benchmark::State& state) {
   for (auto _ : state) {
     auto v = map.insert(std::rand() % map.size(), 0);
     benchmark::DoNotOptimize(v);
+    benchmark::DoNotOptimize(map);
   }
 
   state.SetComplexityN(state.range(0));
@@ -30,6 +31,7 @@ static void qmap_insert(benchmark::State& state) {
   for (auto _ : state) {
     auto v = tree.find(std::rand() % tree.size());
     benchmark::DoNotOptimize(v);
+    benchmark::DoNotOptimize(tree);
   }
 
   state.SetComplexityN(state.range(0));
@@ -44,8 +46,8 @@ static void btree_get(benchmark::State& state) {
   for (auto _ : state) {
     auto v = tree.get(std::rand() % tree.size());
     benchmark::DoNotOptimize(v);
+    benchmark::DoNotOptimize(tree);
   }
-
   state.SetComplexityN(state.range(0));
 }
 
@@ -73,6 +75,7 @@ static void ftree_get(benchmark::State& state) {
   for (auto _ : state) {
     auto v = tree.get(std::rand() % tree.size());
     benchmark::DoNotOptimize(v);
+    benchmark::DoNotOptimize(tree);
   }
 
   state.SetComplexityN(state.range(0));
@@ -144,25 +147,25 @@ static void ftree_split(benchmark::State& state) {
   state.SetComplexityN(state.range(0));
 }
 
-BENCHMARK(qmap_get)
-  ->Range(2 << 10, 2 << 16)
-  ->Complexity(benchmark::oAuto);
+// BENCHMARK(qmap_get)
+//   ->Range(2 << 10, 2 << 16)
+//   ->Complexity(benchmark::oAuto);
 
-BENCHMARK(qmap_insert)
-  ->Range(2 << 10, 2 << 16)
-  ->Complexity(benchmark::oAuto);
+// BENCHMARK(qmap_insert)
+//   ->Range(2 << 10, 2 << 16)
+//   ->Complexity(benchmark::oAuto);
 
-BENCHMARK(btree_get)
-  ->Range(2 << 10, 2 << 16)
-  ->Complexity(benchmark::oAuto);
+// BENCHMARK(btree_get)
+//   ->Range(2 << 10, 2 << 16)
+//   ->Complexity(benchmark::oAuto);
 
-BENCHMARK(btree_insert)
-  ->Range(2 << 10, 2 << 16)
-  ->Complexity(benchmark::oAuto);
+// BENCHMARK(btree_insert)
+//   ->Range(2 << 10, 2 << 16)
+//   ->Complexity(benchmark::oAuto);
 
-BENCHMARK(ftree_get)
-  ->Range(2 << 10, 2 << 16)
-  ->Complexity(benchmark::oAuto);
+// BENCHMARK(ftree_get)
+//   ->Range(2 << 10, 2 << 16)
+//   ->Complexity(benchmark::oAuto);
 
 BENCHMARK(ftree_insert)
   ->Range(2 << 10, 2 << 16)
@@ -180,7 +183,7 @@ BENCHMARK(ftree_split)
   ->Range(2 << 10, 2 << 16)
   ->Complexity(benchmark::oAuto);
 
-// BENCHMARK_MAIN();
+BENCHMARK_MAIN();
 
 static int COPIES = 0;
 
@@ -208,10 +211,10 @@ struct TrackCopy {
 };
 
 std::ostream& operator<<(std::ostream &os, const TrackCopy &m) {
-    return os << m._value;
+  return os << m._value;
 }
 
-static constexpr uint ITERATIONS = 1000;
+static constexpr uint ITERATIONS = 100'000;
 
 void b_tree() {
   auto last = btree::BTree<int, TrackCopy, 32>();
@@ -243,20 +246,20 @@ void q_map() {
   }
 }
 
-int main() {
-  std::cout << "iterations: " << ITERATIONS << "\n" << std::endl;
+// int main() {
+  // std::cout << "iterations: " << ITERATIONS << "\n" << std::endl;
 
-  b_tree();
-  std::cout << "persistent B-Tree: " << COPIES << std::endl;
-  TrackCopy::reset();
+  // b_tree();
+  // std::cout << "persistent B-Tree: " << COPIES << std::endl;
+  // TrackCopy::reset();
 
-  finger_tree();
-  std::cout << "persistent FingerTree: " << COPIES << std::endl;
-  TrackCopy::reset();
+  // finger_tree();
+  // std::cout << "persistent FingerTree: " << COPIES << std::endl;
+  // TrackCopy::reset();
 
-  q_map();
-  std::cout << "QMap: " << COPIES << std::endl;
-  TrackCopy::reset();
+  // q_map();
+  // std::cout << "QMap: " << COPIES << std::endl;
+  // TrackCopy::reset();
 
-  return 0;
-}
+//   return 0;
+// }

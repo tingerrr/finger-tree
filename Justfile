@@ -20,7 +20,7 @@ debug: build
 
 # run and profile the project
 profile: build
-    cd out; valgrind --tool=callgrind ./main
+    mkdir -p out/traces; cd out/traces; valgrind --tool=callgrind ../main
 
 # force rebuild the project
 force-build: clean
@@ -32,6 +32,7 @@ force-run: force-build
 
 # remove compilation artifacts
 clean: qmake
+    rm -rf out/traces
     make clean
 
 # pruge all intermediate files
