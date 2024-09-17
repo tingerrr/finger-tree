@@ -3,7 +3,7 @@
 
 #include <benchmark/benchmark.h>
 
-static void btree_get_full(benchmark::State& state) {
+static void btree_get(benchmark::State& state) {
   auto tree = btree::BTree<int, int>();
   for (auto i = 0; i < state.range(0); i++) {
     tree = tree.insert(i, i);
@@ -17,24 +17,22 @@ static void btree_get_full(benchmark::State& state) {
   state.SetComplexityN(state.range(0));
 }
 
-static void btree_insert_consecutive(benchmark::State& state) {
+static void btree_insert(benchmark::State& state) {
   auto tree = btree::BTree<int, int>();
 
   for (auto i = 0; i < state.range(0); i++) {
     tree = tree.insert(i, i);
   }
 
-  int i = 0;
   for (auto _ : state) {
-    tree = tree.insert(i, i);
+    tree = tree.insert(std::rand() % tree.size(), 0);
     benchmark::DoNotOptimize(tree);
-    i++;
   }
 
   state.SetComplexityN(state.range(0));
 }
 
-static void ftree_get_full(benchmark::State& state) {
+static void ftree_get(benchmark::State& state) {
   auto tree = btree::BTree<int, int>();
   for (auto i = 0; i < state.range(0); i++) {
     tree = tree.insert(i, i);
@@ -48,17 +46,15 @@ static void ftree_get_full(benchmark::State& state) {
   state.SetComplexityN(state.range(0));
 }
 
-static void ftree_push_consecutive(benchmark::State& state) {
+static void ftree_push(benchmark::State& state) {
   auto tree = ftree::FingerTree<int, int>();
 
   for (auto i = 0; i < state.range(0); i++) {
-    tree.push(ftree::Left, i, i);
+    tree.insert(i, i);
   }
 
   for (auto _ : state) {
-    // NOTE: it's ok to violate the unique invariants here because we don't
-    // query the tree
-    tree.push(ftree::Left, 0, 0);
+    tree.insert(std::rand() % tree.size(), 0);
     benchmark::DoNotOptimize(tree);
   }
 
@@ -69,7 +65,7 @@ static void ftree_insert(benchmark::State& state) {
   auto tree = ftree::FingerTree<int, int>();
 
   for (auto i = 0; i < state.range(0); i++) {
-    tree.push(ftree::Left, i, i);
+    tree.insert(i, i);
   }
 
   for (auto _ : state) {
@@ -84,7 +80,7 @@ static void ftree_concat(benchmark::State& state) {
   auto tree = ftree::FingerTree<int, int>();
 
   for (auto i = 0; i < state.range(0); i++) {
-    tree.push(ftree::Left, i, i);
+    tree.insert(i, i);
   }
 
   auto copy = tree;
@@ -99,19 +95,19 @@ static void ftree_concat(benchmark::State& state) {
   state.SetComplexityN(state.range(0));
 }
 
-BENCHMARK(btree_get_full)
+BENCHMARK(btree_get)
   ->Range(2 << 10, 2 << 16)
   ->Complexity(benchmark::oAuto);
 
-BENCHMARK(btree_insert_consecutive)
+BENCHMARK(btree_insert)
   ->Range(2 << 10, 2 << 16)
   ->Complexity(benchmark::oAuto);
 
-BENCHMARK(ftree_get_full)
+BENCHMARK(ftree_get)
   ->Range(2 << 10, 2 << 16)
   ->Complexity(benchmark::oAuto);
 
-BENCHMARK(ftree_push_consecutive)
+BENCHMARK(ftree_push)
   ->Range(2 << 10, 2 << 16)
   ->Complexity(benchmark::oAuto);
 
