@@ -265,21 +265,37 @@ namespace ftree {
 
     if (const auto* single = this->as_single()) {
       node::Node<K, V> other = single->node();
+      std::vector<node::Node<K, V>> left;
+      std::vector<node::Node<K, V>> right;
+
+      left.reserve(5);
+      right.reserve(5);
 
       switch (dir) {
         case Left:
-          this->_repr = std::make_shared<Repr>(Deep<K, V>({ node }, { other }));
-          return;
+          left.push_back(node);
+          right.push_back(other);
+          break;
         case Right:
-          this->_repr = std::make_shared<Repr>(Deep<K, V>({ other  }, { node }));
-          return;
+          left.push_back(other);
+          right.push_back(node);
+          break;
       }
+
+      this->_repr = std::make_shared<Repr>(Deep<K, V>(
+        std::move(left),
+        std::move(right)
+      ));
+      return;
     }
 
     const auto* deep = this->as_deep();
 
     std::vector<node::Node<K, V>> left(deep->left().begin(), deep->left().end());
     std::vector<node::Node<K, V>> right(deep->right().begin(), deep->right().end());
+    left.reserve(5);
+    right.reserve(5);
+
     FingerTree<K, V> middle = deep->middle();
 
     switch (dir) {

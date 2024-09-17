@@ -37,12 +37,21 @@ namespace ftree::node {
   Deep<K, V>::Deep(
     const Node<K, V>& a,
     const Node<K, V>& b
-  ) : _size(a.size() + b.size()), _key(b.key()), _children { a, b } {}
+  ) : _size(a.size() + b.size()), _key(b.key()), _children() {
+    this->_children.reserve(2);
+    this->_children.push_back(a);
+    this->_children.push_back(b);
+  }
 
   template<typename K, typename V>
   Deep<K, V>::Deep(
     const Node<K, V>& a,
     const Node<K, V>& b,
     const Node<K, V>& c
-  ) : _size(a.size() + b.size() + c.size()), _key(c.key()), _children { a, b, c } {}
+  ) : _size(a.size() + b.size() + c.size()), _key(c.key()), _children() {
+    this->_children.reserve(3);
+    this->_children.push_back(a);
+    this->_children.push_back(b);
+    this->_children.push_back(c);
+  }
 }

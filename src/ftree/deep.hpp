@@ -54,8 +54,9 @@ namespace ftree {
     const FingerTree<K, V>& middle,
     std::vector<node::Node<K, V>>&& right
   ) : _left(std::move(left)), _middle(middle), _right(std::move(right)) {
-    this->_left.reserve(4);
-    this->_right.reserve(4);
+    // NOTE: we alloc one more for the overflow to avoid reallocs there
+    this->_left.reserve(5);
+    this->_right.reserve(5);
 
     for (const node::Node<K, V>& node : this->_left) {
       this->_size += node.size();
