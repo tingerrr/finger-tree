@@ -16,4 +16,8 @@ namespace ftree {
   class FingerTree;
 
   enum Direction { Left, Right };
+
+  auto invert(Direction dir) -> Direction {
+    return dir == Left ? Right : Left;
+  }
 }

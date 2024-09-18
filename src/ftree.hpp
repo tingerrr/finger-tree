@@ -2,6 +2,7 @@
 
 #include "src/ftree/core.hpp"
 #include "src/ftree/deep.hpp"
+#include "src/ftree/digit.hpp"
 #include "src/ftree/node.hpp"
 #include "src/ftree/single.hpp"
 
@@ -48,9 +49,9 @@ namespace ftree {
       ) -> FingerTree<K, V>;
 
       static auto deep_smart(
-        std::span<const node::Node<K, V>> left,
+        digit::Digits<K, V>&& left,
         FingerTree<K, V>&& middle,
-        std::span<const node::Node<K, V>> right
+        digit::Digits<K, V>&& right
       ) -> FingerTree<K, V>;
 
     public:
@@ -166,36 +167,29 @@ namespace ftree {
   // - retains the depth of the passed in nodes
   template<typename K, typename V>
   auto FingerTree<K, V>::deep_smart(
-    std::span<const node::Node<K, V>> left,
+    digit::Digits<K, V>&& left,
     FingerTree<K, V>&& middle,
-    std::span<const node::Node<K, V>> right
+    digit::Digits<K, V>&& right
   ) -> FingerTree<K, V> {
-    std::vector<node::Node<K, V>> left_copy(left.begin(), left.end());
-    std::vector<node::Node<K, V>> right_copy(right.begin(), right.end());
+    digit::Digits<K, V> left_copy = left;
+    digit::Digits<K, V> right_copy = right;
 
-    left_copy.reserve(5);
-    right_copy.reserve(5);
-
-    if (left_copy.size() == 0) {
+    if (left_copy.digits().size() == 0) {
       if (middle.is_empty()) {
-        return FingerTree<K, V>::from_impl(right_copy);
+        return FingerTree<K, V>::from_impl(right_copy.digits());
       }
 
       // NOTE: middle cannot contain leaves and is not empty
       auto underflow = *middle.pop_impl(Left);
-      for (const auto& unpacked : underflow.as_deep()->children()) {
-        left_copy.push_back(unpacked);
-      }
-    } else if (right_copy.size() == 0) {
+      left_copy.put_packed(Right, *underflow.as_deep());
+    } else if (right_copy.digits().size() == 0) {
       if (middle.is_empty()) {
-        return FingerTree<K, V>::from_impl(left_copy);
+        return FingerTree<K, V>::from_impl(left_copy.digits());
       }
 
       // NOTE: middle cannot contain leaves and is not empty
       auto underflow = *middle.pop_impl(Right);
-      for (const auto& unpacked : underflow.as_deep()->children()) {
-        right_copy.push_back(unpacked);
-      }
+      right_copy.put_packed(Left, *underflow.as_deep());
     }
 
     return FingerTree(Deep<K, V>(
@@ -273,62 +267,38 @@ namespace ftree {
 
     if (const auto* single = this->as_single()) {
       node::Node<K, V> other = single->node();
-      std::vector<node::Node<K, V>> left;
-      std::vector<node::Node<K, V>> right;
-
-      left.reserve(5);
-      right.reserve(5);
-
-      switch (dir) {
-        case Left:
-          left.push_back(node);
-          right.push_back(other);
-          break;
-        case Right:
-          left.push_back(other);
-          right.push_back(node);
-          break;
-      }
 
       this->_repr = std::make_shared<Repr>(Deep<K, V>(
-        std::move(left),
-        std::move(right)
+        digit::Digits<K, V>(dir == Left ? node : other),
+        digit::Digits<K, V>(dir == Left ? other : node)
       ));
       return;
     }
 
     const auto* deep = this->as_deep();
 
-    std::vector<node::Node<K, V>> left(deep->left().begin(), deep->left().end());
-    std::vector<node::Node<K, V>> right(deep->right().begin(), deep->right().end());
-    left.reserve(5);
-    right.reserve(5);
-
+    digit::Digits<K, V> left = deep->left();
+    digit::Digits<K, V> right = deep->right();
     FingerTree<K, V> middle = deep->middle();
 
+    std::optional<node::Node<K, V>> overflow;
     switch (dir) {
       case Left:
-        left.insert(left.begin(), node);
-
-        if (left.size() > 4) {
-          middle.push_impl(
-            dir,
-            node::Node<K, V>(left[2], left[3], left[4])
-          );
-          left = { left[0], left[1] };
+        if (left.is_max_digit_size()) {
+          overflow = left.take_packed(Right);
         }
+        left.push(Left, node);
         break;
       case Right:
-        right.push_back(node);
-
-        if (right.size() > 4) {
-          middle.push_impl(
-            dir,
-            node::Node<K, V>(right[0], right[1], right[2])
-          );
-          right = { right[3], right[4] };
+        if (right.is_max_digit_size()) {
+          overflow = right.take_packed(Left);
         }
+        right.push(Right, node);
         break;
+    }
+
+    if (overflow) {
+      middle.push_impl(dir, *overflow);
     }
 
     this->_repr = std::make_shared<Repr>(Deep<K, V>(
@@ -381,106 +351,66 @@ namespace ftree {
 
     const auto* deep = this->as_deep();
 
-    std::vector<node::Node<K, V>> left(deep->left().begin(), deep->left().end());
-    std::vector<node::Node<K, V>> right(deep->right().begin(), deep->right().end());
+    digit::Digits<K, V> left = deep->left();
+    digit::Digits<K, V> right = deep->right();
     FingerTree<K, V> middle = deep->middle();
 
+    if (middle.is_empty()) {
+      if (left.is_min_digit_size() && right.is_min_digit_size()) {
+        this->_repr = std::make_shared<Repr>(Single(
+          dir == Left
+            ? right.digits().back()
+            : left.digits().front()
+        ));
+        return std::optional<node::Node<K, V>>(
+          dir == Left
+            ? left.digits().front()
+            : right.digits().back()
+        );
+      }
+
+      if (dir == Left && left.is_min_digit_size()) {
+        left.push(Right, right.pop(Left));
+        return left.pop(Left);
+      }
+
+      if (dir == Right && right.is_min_digit_size()) {
+        right.push(Left, left.pop(Right));
+        return right.pop(Right);
+      }
+    }
+
+    if (dir == Left && !left.is_min_digit_size()) {
+      return left.pop(Left);
+    }
+
+    if (dir == Right && !right.is_min_digit_size()) {
+      return right.pop(Right);
+    }
+
+    // NOTE: middle tree is not empty
     std::optional<node::Node<K, V>> node;
+    node::Node<K, V> underflow = *middle.pop_impl(dir);
 
     switch (dir) {
       case Left:
-        node = std::optional(left.front());
-        left.erase(left.begin());
-        if (left.size() > 0) {
-          this->_repr = std::make_shared<Repr>(Deep<K, V>(
-            std::move(left),
-            std::move(middle),
-            std::move(right)
-          ));
-          return node;
-        }
+        // NOTE: a middle tree cannot contain leaves
+        left.put_packed(Right, *underflow.as_deep());
+        node = left.pop(Left);
         break;
       case Right:
-        node = std::optional(right.back());
-        right.pop_back();
-        if (right.size() > 0) {
-          this->_repr = std::make_shared<Repr>(Deep<K, V>(
-            std::move(left),
-            std::move(middle),
-            std::move(right)
-          ));
-          return node;
-        }
+        // NOTE: a middle tree cannot contain leaves
+        right.put_packed(Left, *underflow.as_deep());
+        node = right.pop(Right);
         break;
     }
 
-    // NOTE: left/right is empty after taking out a node, we need to either
-    // take from the other side or the middle
-    if (middle.is_empty()) {
-      switch (dir) {
-        case Left:
-          if (right.size() == 1) {
-            this->_repr = std::make_shared<Repr>(Single(right.front()));
-          } else {
-            for (
-              auto it = right.begin(); it != right.begin() + right.size() / 2; it++
-            ) {
-              left.push_back(*it);
-            }
-            right.erase(right.begin(), right.begin() + right.size() / 2);
-            this->_repr = std::make_shared<Repr>(Deep<K, V>(
-              std::move(left),
-              std::move(middle),
-              std::move(right)
-            ));
-          }
-          break;
-        case Right:
-          if (left.size() == 1) {
-            this->_repr = std::make_shared<Repr>(Single(left.back()));
-          } else {
-            for (
-              auto it = --left.end(); it != left.begin() + left.size() / 2 - 1; it--
-            ) {
-              right.insert(right.begin(), *it);
-            }
-            left.erase(left.begin() + left.size() / 2, left.end());
-            this->_repr = std::make_shared<Repr>(Deep<K, V>(
-              std::move(left),
-              std::move(middle),
-              std::move(right)
-            ));
-          }
-          break;
-      }
-    } else {
-      // NOTE: we know this is deep because a middle tree cannot have leaf
-      // nodes
-      node::Node<K, V> underflow = *middle.pop_impl(dir);
+    this->_repr = std::make_shared<Repr>(Deep<K, V>(
+      std::move(left),
+      std::move(middle),
+      std::move(right)
+    ));
 
-      switch (dir) {
-        case Left:
-          for (const auto& child : underflow.as_deep()->children()) {
-            left.push_back(child);
-          }
-          break;
-        case Right:
-          for (
-            auto it = underflow.as_deep()->children().rbegin();
-            it != underflow.as_deep()->children().rend();
-            it++
-          ) {
-            right.insert(right.begin(), *it);
-          }
-          break;
-      }
-
-      this->_repr = std::make_shared<Repr>(Deep<K, V>(
-        std::move(left),
-        std::move(middle),
-        std::move(right)
-      ));
-    }
     return node;
   }
 
@@ -549,13 +479,18 @@ namespace ftree {
     const auto* deep = this->as_deep();
     FingerTree<K, V> middle = deep->middle();
 
-    if (deep->left().back().key() >= key) {
-      auto [left, node, right] = node::Node<K, V>::digit_split(deep->left(), key);
+    if (deep->left().key() >= key) {
+      auto [left, node, right] = deep->left().split(key);
+      digit::Digits<K, V> outer_right = deep->right();
 
       return std::make_tuple(
-        FingerTree<K, V>::from_impl(left),
+        FingerTree<K, V>::from_impl(left.digits()),
         node,
-        FingerTree<K, V>::deep_smart(right, std::move(middle), deep->right())
+        FingerTree<K, V>::deep_smart(
+          std::move(right),
+          std::move(middle),
+          std::move(outer_right)
+        )
       );
     }
 
@@ -563,31 +498,46 @@ namespace ftree {
     auto middle_deep = middle.as_deep();
 
     bool is_middle = middle_single
-      ? middle_single->node().key() >= key
+      ? middle_single->key() >= key
       : middle_deep
-        ? middle_deep->right().back().key() >= key
+        ? middle_deep->key() >= key
         : false;
 
     if (is_middle) {
       auto [middle_left, packed_node, middle_right] = middle.split_impl(key);
       // NOTE: middle cannot contain leaves and is not empty
-      auto [left, node, right] = node::Node<K, V>::digit_split(
-        packed_node->as_deep()->children(),
-        key
-      );
+      auto [left, node, right] = digit::Digits<K, V>::from(
+        packed_node->as_deep()->children()
+      ).split(key);
+
+      digit::Digits<K, V> outer_left = deep->left();
+      digit::Digits<K, V> outer_right = deep->right();
 
       return std::make_tuple(
-        FingerTree<K, V>::deep_smart(deep->left(), std::move(middle_left), left),
+        FingerTree<K, V>::deep_smart(
+          std::move(outer_left),
+          std::move(middle_left),
+          std::move(left)
+        ),
         node,
-        FingerTree<K, V>::deep_smart(right, std::move(middle_right), deep->right())
+        FingerTree<K, V>::deep_smart(
+          std::move(right),
+          std::move(middle_right),
+          std::move(outer_right)
+        )
       );
     }
 
-    auto [left, node, right] = node::Node<K, V>::digit_split(deep->right(), key);
+    auto [left, node, right] = deep->right().split(key);
+    digit::Digits<K, V> outer_left = deep->left();
     return std::make_tuple(
-      FingerTree<K, V>::deep_smart(deep->left(), std::move(middle), left),
+      FingerTree<K, V>::deep_smart(
+        std::move(outer_left),
+        std::move(middle),
+        std::move(left)
+      ),
       node,
-      FingerTree<K, V>::from_impl(right)
+      FingerTree<K, V>::from_impl(right.digits())
     );
   }
 
@@ -623,10 +573,12 @@ namespace ftree {
       // TODO: this vector can be used as in- and output by packing nodes in place
       std::vector<node::Node<K, V>> concat;
       concat.reserve(
-        left_deep->right().size() + middle.size() + right_deep->left().size()
+        left_deep->right().digit_size()
+        + middle.size()
+        + right_deep->left().digit_size()
       );
 
-      for (const auto& node : left_deep->right()) {
+      for (const auto& node : left_deep->right().digits()) {
         concat.push_back(node);
       }
 
@@ -634,7 +586,7 @@ namespace ftree {
         concat.push_back(node);
       }
 
-      for (const auto& node : right_deep->left()) {
+      for (const auto& node : right_deep->left().digits()) {
         concat.push_back(node);
       }
 
@@ -642,14 +594,17 @@ namespace ftree {
         std::span(concat)
       );
 
+      digit::Digits<K, V> outer_left = left_deep->left();
+      digit::Digits<K, V> outer_right = right_deep->right();
+
       return FingerTree(Deep<K, V>(
-        std::move(std::vector(left_deep->left().begin(), left_deep->left().end())),
+        std::move(outer_left),
         FingerTree<K, V>::concat_impl(
           left_deep->middle(),
           std::span(packed),
           right_deep->middle()
         ),
-        std::move(std::vector(right_deep->right().begin(), right_deep->right().end()))
+        std::move(outer_right)
       ));
     }
   }
@@ -801,13 +756,14 @@ namespace ftree {
     if (const auto* single = this->as_single()) {
       std::cout << istr << ref_count << " Single" << std::endl;
       single->node().show(indent + 1);
+      return;
     }
 
     const auto* deep = this->as_deep();
 
     std::cout << istr << ref_count << " Deep" << std::endl;
     std::cout << istr2 << "Left [" << std::endl;
-    for (const auto& node : deep->left()) {
+    for (const auto& node : deep->left().digits()) {
       node.show(indent + 2);
     }
     std::cout << istr2 << "]" << std::endl;
@@ -815,7 +771,7 @@ namespace ftree {
     deep->middle().show(indent + 1);
 
     std::cout << istr2 << "Right [" << std::endl;
-    for (const auto& node : deep->right()) {
+    for (const auto& node : deep->right().digits()) {
       node.show(indent + 2);
     }
     std::cout << istr2 << "]" << std::endl;

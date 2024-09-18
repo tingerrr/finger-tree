@@ -24,6 +24,8 @@ HEADERS += src/btree.hpp
 
 HEADERS += src/ftree/core.hpp
 HEADERS += src/ftree/deep.hpp
+HEADERS += src/ftree/digit/core.hpp
+HEADERS += src/ftree/digit.hpp
 HEADERS += src/ftree/node/core.hpp
 HEADERS += src/ftree/node/deep.hpp
 HEADERS += src/ftree/node/leaf.hpp

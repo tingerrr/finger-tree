@@ -36,7 +36,7 @@ namespace ftree::node {
       };
 
     public:
-      Node() = delete;
+      Node() = default;
 
     public:
       Node(Deep<K, V>&& repr);
@@ -234,31 +234,5 @@ namespace ftree::node {
     }
 
     return std::optional<Node<K, V>>();
-  }
-
-  template<typename K, typename V>
-  auto Node<K, V>::digit_split(
-    std::span<const Node<K, V>> nodes,
-    const K& key
-  ) -> std::tuple<
-    std::span<const Node<K, V>>,
-    std::optional<Node<K, V>>,
-    std::span<const Node<K, V>>
-  > {
-    for (uint i = 0; i < nodes.size(); i++) {
-      if (nodes[i].key() >= key) {
-        return std::make_tuple(
-          nodes.subspan(0, i),
-          std::optional(nodes[i]),
-          nodes.subspan(i + 1)
-        );
-      }
-    }
-
-    return std::make_tuple(
-      nodes,
-      std::optional<Node<K, V>>(),
-      std::span<const Node<K, V>>()
-    );
   }
 }
