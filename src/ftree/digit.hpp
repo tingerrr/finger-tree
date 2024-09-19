@@ -136,6 +136,13 @@ namespace ftree::digit {
 
   template<typename K, typename V>
   auto Digits<K, V>::get(const K& key) const -> std::optional<node::Node<K, V>> {
+    // NOTE: reverse search to find the right most matching node
+    for (auto it = this->digits().rbegin(); it != this->digits().rend(); it++) {
+      if (it->key() <= key) {
+        return it->get(key);
+      }
+    }
+
     return std::optional<node::Node<K, V>>();
   }
 

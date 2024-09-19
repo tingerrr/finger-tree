@@ -244,15 +244,29 @@ namespace ftree {
     }
 
     const auto* deep = this->as_deep();
-    if (deep->left().back().key() <= key) {
-      return node::Node<K, V>::digit_get(deep->left());
-    } else if (deep->middle().key() <= key) {
-      return deep->middle().get_impl(key);
-    } else if (deep->right().back().key() <= key) {
-      return node::Node<K, V>::digit_get(deep->right());
-    } else {
-      return std::optional<node::Node<K, V>>();
+    if (deep->left().key() <= key) {
+      return deep->left().get(key);
     }
+
+    auto middle = deep->middle();
+    auto middle_single = middle.as_single();
+    auto middle_deep = middle.as_deep();
+
+    bool is_middle = middle_single
+      ? middle_single->key() <= key
+      : middle_deep
+        ? middle_deep->key() <= key
+        : false;
+
+    if (is_middle) {
+      return middle.get_impl(key);
+    }
+
+    if (deep->right().key() <= key) {
+      return deep->right().get(key);
+    }
+
+    return std::optional<node::Node<K, V>>();
   }
 
   template<typename K, typename V>
@@ -612,7 +626,7 @@ namespace ftree {
   template<typename K, typename V>
   auto FingerTree<K, V>::get(const K& key) -> std::optional<V> {
     std::optional<node::Node<K, V>> node = this->get_impl(key);
-    std::optional<std::pair<K, V>> unpacked;
+    std::optional<V> unpacked;
 
     if (node) {
       auto leaf = node->as_leaf();

@@ -54,7 +54,7 @@ namespace ftree::node {
       auto as_leaf() const -> const Leaf<K, V>*;
       auto as_deep() const -> const Deep<K, V>*;
 
-      auto get(const K& key) -> std::optional<Node<K, V>>;
+      auto get(const K& key) const -> std::optional<Node<K, V>>;
 
     public:
       auto show(uint indent) const -> void;
@@ -63,20 +63,6 @@ namespace ftree::node {
       static auto pack_nodes(
         std::span<const Node<K, V>> nodes
       ) -> std::vector<Node<K, V>>;
-
-      static auto digit_get(
-        std::span<const Node<K, V>> nodes,
-        const K& key
-      ) -> std::optional<Node<K, V>>;
-
-      static auto digit_split(
-        std::span<const Node<K, V>> nodes,
-        const K& key
-      ) -> std::tuple<
-        std::span<const Node<K, V>>,
-        std::optional<Node<K, V>>,
-        std::span<const Node<K, V>>
-      >;
 
     private:
       std::shared_ptr<Repr> _repr;
@@ -141,19 +127,19 @@ namespace ftree::node {
   }
 
   template<typename K, typename V>
-  auto Node<K, V>::get(const K& key) -> std::optional<Node<K, V>> {
+  auto Node<K, V>::get(const K& key) const -> std::optional<Node<K, V>> {
     if (const auto* deep = this->as_deep()) {
-      // NOTE: we only have 2 or 3 children, a linear search suffices
-      for (const auto& child : deep->children()) {
-        if (child.key_in_range(key)) {
-          return child.get(key);
+    // NOTE: reverse search to find the right most matching node
+      for (auto it = deep->children().rbegin(); it != deep->children().rend(); it++) {
+        if (it->key() <= key) {
+          return it->get(key);
         }
       }
 
       return std::optional<Node<K, V>>();
     } else {
       const auto* leaf = this->as_leaf();
-      if (leaf->key_in_range(key)) {
+      if (leaf->key() == key) {
         return std::optional<Node<K, V>>(*this);
       } else {
         return std::optional<Node<K, V>>();
@@ -218,21 +204,5 @@ namespace ftree::node {
     }
 
     return packed;
-  }
-
-  template<typename K, typename V>
-  auto Node<K, V>::digit_get(
-    std::span<const Node<K, V>> nodes,
-    const K& key
-  ) -> std::optional<Node<K, V>> {
-    // NOTE: we only have between 1 and 4 digits, a linear search suffices
-
-    for (const auto& node : nodes) {
-      if (node.key_in_range(key)) {
-        return node.get(key);
-      }
-    }
-
-    return std::optional<Node<K, V>>();
   }
 }
