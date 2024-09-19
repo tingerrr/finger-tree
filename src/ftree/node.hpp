@@ -165,27 +165,28 @@ namespace ftree::node {
   auto Node<K, V>::show(uint indent) const -> void {
     auto istr = std::string(indent * 2, ' ');
 
+    if (this->_repr == nullptr) {
+      std::cout << istr << "null" << std::endl;
+      return;
+    }
+
     auto ref_count = this->_repr.use_count();
 
-    std::visit([indent, ref_count, istr](auto& repr) {
-      using T = std::decay_t<decltype(repr)>;
+    if (const Leaf<K, V>* leaf = this->as_deep()) {
+      std::cout
+        << istr
+        << ref_count
+        << " <" << leaf->key() << ":" << leaf->val() << ">"
+        << std::endl;
+      return;
+    }
 
-      if constexpr (std::is_same_v<T, Deep<K, V>>) {
-        std::cout << istr << ref_count << " <"  << std::endl;
-        for (const auto& child : repr.children()) {
-          child.show(indent + 1);
-        }
-        std::cout << istr << ">" << std::endl;
-      } else if constexpr (std::is_same_v<T, Leaf<K, V>>) {
-        std::cout
-          << istr
-          << ref_count
-          << " <" << repr.key() << ":" << repr.val() << ">"
-          << std::endl;
-      } else {
-        static_assert(false, "non-exhaustive visitor");
-      }
-    }, this->_repr->_repr);
+    const Deep<K, V>* deep = this->as_deep();
+    std::cout << istr << ref_count << " <"  << std::endl;
+    for (const auto& child : deep->children()) {
+      child.show(indent + 1);
+    }
+    std::cout << istr << ">" << std::endl;
   }
 
   template<typename K, typename V>

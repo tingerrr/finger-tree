@@ -20,8 +20,8 @@ namespace ftree::node {
 
       auto key() const -> const K& { return this->_key; }
 
-      auto is_two() const -> bool { return this->size() == 2; }
-      auto is_three() const -> bool { return this->size() == 3; }
+      auto is_two() const -> bool { return this->children().size() == 2; }
+      auto is_three() const -> bool { return this->children().size() == 3; }
 
       auto children() const -> std::span<const Node<K, V>> {
         return std::span(this->_children);
