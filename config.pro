@@ -22,16 +22,27 @@ HEADERS += src/btree/core.hpp
 HEADERS += src/btree.hpp
 
 
-HEADERS += src/ftree/core.hpp
-HEADERS += src/ftree/deep.hpp
-HEADERS += src/ftree/digit/core.hpp
-HEADERS += src/ftree/digit.hpp
-HEADERS += src/ftree/node/core.hpp
-HEADERS += src/ftree/node/deep.hpp
-HEADERS += src/ftree/node/leaf.hpp
-HEADERS += src/ftree/node.hpp
-HEADERS += src/ftree/single.hpp
-HEADERS += src/ftree.hpp
+HEADERS += src/finger_tree/digit/_prelude.hpp
+HEADERS += src/finger_tree/digit/core.hpp
+HEADERS += src/finger_tree/digit/base.hpp
+HEADERS += src/finger_tree/digit/digit.hpp
+
+HEADERS += src/finger_tree/node/_prelude.hpp
+HEADERS += src/finger_tree/node/core.hpp
+HEADERS += src/finger_tree/node/base.hpp
+HEADERS += src/finger_tree/node/deep.hpp
+HEADERS += src/finger_tree/node/leaf.hpp
+HEADERS += src/finger_tree/node/node.hpp
+
+HEADERS += src/finger_tree/_prelude.hpp
+HEADERS += src/finger_tree/core.hpp
+HEADERS += src/finger_tree/base.hpp
+HEADERS += src/finger_tree/deep.hpp
+HEADERS += src/finger_tree/single.hpp
+HEADERS += src/finger_tree/empty.hpp
+
+HEADERS += src/utils/uninit_exception.hpp
+HEADERS += src/utils/variant_exception.hpp
 
 SOURCES += src/main.cpp
 
