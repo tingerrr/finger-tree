@@ -20,7 +20,7 @@ namespace collections::b_tree {
 
     public:
       auto insert(const K& key, const V& val) const -> BTree<K, V, N>;
-      auto get(const K& key) const -> const V&;
+      auto get(const K& key) const -> const V*;
       auto size() const -> uint;
       auto show() const -> void;
 
@@ -74,7 +74,7 @@ namespace collections::b_tree {
   }
 
   template<typename K, typename V, uint N>
-  auto BTree<K, V, N>::get(const K& key) const -> const V& {
+  auto BTree<K, V, N>::get(const K& key) const -> const V* {
     return this->_root->get(key);
   }
 

@@ -21,7 +21,6 @@ HEADERS += src/collections/b_tree/node.hpp
 HEADERS += src/collections/b_tree/core.hpp
 HEADERS += src/collections/b_tree/b_tree.hpp
 
-
 HEADERS += src/collections/finger_tree/digit/_prelude.hpp
 HEADERS += src/collections/finger_tree/digit/core.hpp
 HEADERS += src/collections/finger_tree/digit/base.hpp

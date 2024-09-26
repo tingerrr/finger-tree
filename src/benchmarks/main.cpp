@@ -8,7 +8,11 @@ BENCHMARK(benchmarks::qmap::get)
   ->Range(2 << 10, 2 << 16)
   ->Complexity(benchmark::oAuto);
 
-BENCHMARK(benchmarks::qmap::insert)
+BENCHMARK(benchmarks::qmap::insert_unique)
+  ->Range(2 << 10, 2 << 16)
+  ->Complexity(benchmark::oAuto);
+
+BENCHMARK(benchmarks::qmap::insert_shared)
   ->Range(2 << 10, 2 << 16)
   ->Complexity(benchmark::oAuto);
 
@@ -24,11 +28,19 @@ BENCHMARK(benchmarks::finger_tree::get)
   ->Range(2 << 10, 2 << 16)
   ->Complexity(benchmark::oAuto);
 
-BENCHMARK(benchmarks::finger_tree::insert)
+BENCHMARK(benchmarks::finger_tree::push_worst)
   ->Range(2 << 10, 2 << 16)
   ->Complexity(benchmark::oAuto);
 
-BENCHMARK(benchmarks::finger_tree::push)
+BENCHMARK(benchmarks::finger_tree::push_avg)
+  ->Range(2 << 10, 2 << 16)
+  ->Complexity(benchmark::oAuto);
+
+BENCHMARK(benchmarks::finger_tree::pop_worst)
+  ->Range(2 << 10, 2 << 16)
+  ->Complexity(benchmark::oAuto);
+
+BENCHMARK(benchmarks::finger_tree::pop_avg)
   ->Range(2 << 10, 2 << 16)
   ->Complexity(benchmark::oAuto);
 

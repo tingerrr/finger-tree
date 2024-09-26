@@ -14,8 +14,6 @@
 #include <sys/types.h>
 
 namespace collections::finger_tree::digit {
-  // NOTE: references or pointers to this cannot leave the thread they originate
-  // from, only cloned values can, i.e. always pass by value across threads
   template<typename K, typename V>
   class Digits {
     // constructors
@@ -226,9 +224,9 @@ namespace collections::finger_tree::digit {
     // NOTE: no pointers or references to a Digits my be sent to another thread,
     // only values of Digits, therefor no copy may be done between this check
     // and subsequent writes
-    if (this->_repr.use_count() == 1) {
-      return;
-    }
+    // if (this->_repr.use_count() == 1) {
+    //   return;
+    // }
 
     this->_repr = std::make_shared<DigitsBase<K, V>>(*this->_repr);
   }

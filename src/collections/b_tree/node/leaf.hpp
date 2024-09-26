@@ -43,7 +43,7 @@ namespace collections::b_tree::node {
         const V& val
       ) const -> InsertResult<K, V, N> override;
 
-      virtual auto get(const K& key) const -> const V& override;
+      virtual auto get(const K& key) const -> const V* override;
 
     protected:
       std::vector<V> _vals;
@@ -128,12 +128,12 @@ namespace collections::b_tree::node {
   }
 
   template<typename K, typename V, uint N>
-  auto Leaf<K, V, N>::get(const K& key) const -> const V& {
+  auto Leaf<K, V, N>::get(const K& key) const -> const V* {
     auto idx  = this->index(key);
     if (idx < this->_keys.size() && this->_keys[idx] == key) {
-      return this->_vals[idx];
+      return &this->_vals[idx];
     } else {
-      throw std::out_of_range("key not found");
+      return nullptr;
     }
   }
 }

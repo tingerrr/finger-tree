@@ -8,11 +8,10 @@ using Dir = collections::finger_tree::Direction;
 auto main() -> int {
   auto tree = FT();
 
-  for (int i = 0; i < 50; i++) {
-    tree.insert(i, i);
+  for (int i = 0; i < 66; i++) {
+    tree.push(Dir::Right, i, i);
   }
 
-  std::cout << "TREE" << std::endl;
   std::cout << tree << std::endl;
 
   return 0;

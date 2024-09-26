@@ -5,35 +5,53 @@
 #include <benchmark/benchmark.h>
 
 namespace benchmarks::qmap {
-  static void get(benchmark::State& state) {
+  auto get(benchmark::State& state) -> void {
     auto map = QMap<int, int>();
     for (auto i = 0; i < state.range(0); i++) {
-      map.insert(i, i);
+      auto v = std::rand();
+      map.insert(v, v);
     }
 
     for (auto _ : state) {
-      // NOTE: most random values fall above the tree max value and would cause
-      // only best-case early exit for querying
-      auto v = map.find(std::rand() % map.size());
+      auto v = map.find(std::rand());
       benchmark::DoNotOptimize(v);
-      benchmark::DoNotOptimize(map);
     }
 
+    benchmark::DoNotOptimize(map);
     state.SetComplexityN(state.range(0));
   }
 
-  static void insert(benchmark::State& state) {
+  auto insert_unique(benchmark::State& state) -> void {
     auto map = QMap<int, int>();
     for (auto i = 0; i < state.range(0); i++) {
-      map.insert(i, i);
+      auto v = std::rand();
+      map.insert(v, v);
     }
 
     for (auto _ : state) {
       auto v = map.insert(std::rand(), 0);
       benchmark::DoNotOptimize(v);
-      benchmark::DoNotOptimize(map);
     }
 
+    benchmark::DoNotOptimize(map);
+    state.SetComplexityN(state.range(0));
+  }
+
+  auto insert_shared(benchmark::State& state) -> void {
+    auto map = QMap<int, int>();
+    for (auto i = 0; i < state.range(0); i++) {
+      auto v = std::rand();
+      map.insert(v, v);
+    }
+
+    for (auto _ : state) {
+      auto copy = map;
+      auto v = map.insert(std::rand(), 0);
+      benchmark::DoNotOptimize(v);
+      benchmark::DoNotOptimize(copy);
+    }
+
+    benchmark::DoNotOptimize(map);
     state.SetComplexityN(state.range(0));
   }
 }

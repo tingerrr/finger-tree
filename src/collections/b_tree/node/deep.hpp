@@ -46,7 +46,7 @@ namespace collections::b_tree::node {
         const V& val
       ) const -> InsertResult<K, V, N> override;
 
-       virtual auto get(const K& key) const -> const V& override;
+       virtual auto get(const K& key) const -> const V* override;
 
     protected:
       std::vector<SharedNode<K, V, N>> _children;
@@ -160,7 +160,7 @@ namespace collections::b_tree::node {
   }
 
   template<typename K, typename V, uint N>
-  auto Deep<K, V, N>::get(const K& key) const -> const V& {
+  auto Deep<K, V, N>::get(const K& key) const -> const V* {
     auto idx  = this->index(key);
     return this->_children[idx]->get(key);
   }

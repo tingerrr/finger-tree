@@ -11,8 +11,8 @@ build: qmake
     make
 
 # run the project
-run: build
-    ./out/main
+run *args: build
+    ./out/main {{ args }}
 
 # run and debug the project
 debug: build
@@ -27,8 +27,8 @@ force-build: clean
     bear -- make
 
 # force rebuild and run the project
-force-run: force-build
-    ./out/main
+force-run *args: force-build
+    ./out/main {{ args }}
 
 # remove compilation artifacts
 clean: qmake

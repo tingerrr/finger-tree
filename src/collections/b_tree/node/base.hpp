@@ -69,7 +69,7 @@ namespace collections::b_tree::node {
         const V& val
       ) const -> InsertResult<K, V, N> = 0;
 
-      virtual auto get(const K& key) const -> const V& = 0;
+      virtual auto get(const K& key) const -> const V* = 0;
 
     protected:
       auto index(const K& key) const -> uint;

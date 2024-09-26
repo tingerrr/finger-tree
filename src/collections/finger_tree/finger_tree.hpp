@@ -23,8 +23,6 @@
 #include <vector>
 
 namespace collections::finger_tree {
-  // NOTE: references or pointers to this cannot leave the thread they originate
-  // from, only cloned values can, i.e. always pass by value across threads
   template<typename K, typename V>
   class FingerTree {
     // constructors
@@ -656,9 +654,9 @@ namespace collections::finger_tree {
     // NOTE: no pointers or references to a FingerTree my be sent to another
     // thread, only values of FingerTree, therefor no copy may be done between
     // this check and subsequent writes
-    if (this->_repr.use_count() == 1) {
-      return;
-    }
+    // if (this->_repr.use_count() == 1) {
+    //   return;
+    // }
 
     if (this->is_empty()) {
       const auto& empty = this->as_empty();
