@@ -1,3 +1,3 @@
-#include "src/main_benchmarks.cpp"
-// #include "src/main_copy_tracking.cpp"
-// #include "src/main_tests.cpp"
+#include "src/benchmarks/main.cpp"
+// #include "src/copy_tracking/main.cpp"
+// #include "src/tests/main.cpp"

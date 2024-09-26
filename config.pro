@@ -12,34 +12,34 @@ TARGET = out/main
 
 QMAKE_CXXFLAGS += -std=c++20
 
-HEADERS += src/btree/node/core.hpp
-HEADERS += src/btree/node/base.hpp
-HEADERS += src/btree/node/deep.hpp
-HEADERS += src/btree/node/leaf.hpp
-HEADERS += src/btree/node.hpp
+HEADERS += src/collections/b_tree/node/core.hpp
+HEADERS += src/collections/b_tree/node/base.hpp
+HEADERS += src/collections/b_tree/node/deep.hpp
+HEADERS += src/collections/b_tree/node/leaf.hpp
+HEADERS += src/collections/b_tree/node.hpp
 
-HEADERS += src/btree/core.hpp
-HEADERS += src/btree.hpp
+HEADERS += src/collections/b_tree/core.hpp
+HEADERS += src/collections/b_tree/b_tree.hpp
 
 
-HEADERS += src/finger_tree/digit/_prelude.hpp
-HEADERS += src/finger_tree/digit/core.hpp
-HEADERS += src/finger_tree/digit/base.hpp
-HEADERS += src/finger_tree/digit/digit.hpp
+HEADERS += src/collections/finger_tree/digit/_prelude.hpp
+HEADERS += src/collections/finger_tree/digit/core.hpp
+HEADERS += src/collections/finger_tree/digit/base.hpp
+HEADERS += src/collections/finger_tree/digit/digit.hpp
 
-HEADERS += src/finger_tree/node/_prelude.hpp
-HEADERS += src/finger_tree/node/core.hpp
-HEADERS += src/finger_tree/node/base.hpp
-HEADERS += src/finger_tree/node/deep.hpp
-HEADERS += src/finger_tree/node/leaf.hpp
-HEADERS += src/finger_tree/node/node.hpp
+HEADERS += src/collections/finger_tree/node/_prelude.hpp
+HEADERS += src/collections/finger_tree/node/core.hpp
+HEADERS += src/collections/finger_tree/node/base.hpp
+HEADERS += src/collections/finger_tree/node/deep.hpp
+HEADERS += src/collections/finger_tree/node/leaf.hpp
+HEADERS += src/collections/finger_tree/node/node.hpp
 
-HEADERS += src/finger_tree/_prelude.hpp
-HEADERS += src/finger_tree/core.hpp
-HEADERS += src/finger_tree/base.hpp
-HEADERS += src/finger_tree/deep.hpp
-HEADERS += src/finger_tree/single.hpp
-HEADERS += src/finger_tree/empty.hpp
+HEADERS += src/collections/finger_tree/_prelude.hpp
+HEADERS += src/collections/finger_tree/core.hpp
+HEADERS += src/collections/finger_tree/base.hpp
+HEADERS += src/collections/finger_tree/deep.hpp
+HEADERS += src/collections/finger_tree/single.hpp
+HEADERS += src/collections/finger_tree/empty.hpp
 
 HEADERS += src/utils/uninit_exception.hpp
 HEADERS += src/utils/variant_exception.hpp
