@@ -41,27 +41,16 @@ namespace benchmarks::finger_tree {
     }
   }
 
-  // Assuming that a uniform distribution of random values inserted into a
-  // finger tree creates a relatively balanced tree, the median value must be in
-  // the middle, i.e. the deepest node.
-  //
-  // Therefore the median gives a reliable worst-case get performance benchmark
-  // by always requiring descent into the deepst node.
   auto get(benchmark::State& state) -> void {
     auto tree = FT();
-    std::vector<int> vals;
 
     for (auto i = 0; i < state.range(0); i++) {
       auto v = std::rand();
       tree.insert(v, v);
-      vals.push_back(v);
     }
 
-    std::sort(vals.begin(), vals.end());
-    auto split = vals[vals.size() / 2];
-
     for (auto _ : state) {
-      auto v = tree.get(split);
+      auto v = tree.get(std::rand());
       benchmark::DoNotOptimize(v);
     }
 
@@ -76,10 +65,12 @@ namespace benchmarks::finger_tree {
   // side.
   auto push_worst(benchmark::State& state) -> void {
     auto tree = FT();
-    auto n = depth_to_overflow_count_nearest(state.range(0));
+    auto n = state.range(0);
+    // NOTE: provided as is in benchmark/main
+    // auto n = depth_to_overflow_count_nearest(state.range(0)) - 1;
 
     // full deep overflow occurs at n pushes, we do one less
-    for (uint i = 0; i < n - 1; i++) {
+    for (uint i = 0; i < n; i++) {
       tree.push(Dir::Right, 0, 0);
     }
 
@@ -113,49 +104,6 @@ namespace benchmarks::finger_tree {
     state.SetComplexityN(tree.size());
   }
 
-  // The worst-case performance of pop is given by popping of a fully unsafe
-  // side, i.e. every deep tree has only one digit on that side.
-  //
-  // Pushing only on one side repeatedly creates a tree which is heavy on that
-  // side and light on the other.
-  auto pop_worst(benchmark::State& state) -> void {
-    auto tree = FT();
-
-    // TODO: Ensure this is actually a worst-case tree for the pop opration.
-    for (auto i = 0; i < state.range(0); i++) {
-      tree.push(Dir::Left, 0, 0);
-    }
-
-    for (auto _ : state) {
-      auto copy = tree;
-      copy.pop(Dir::Right);
-    }
-
-    benchmark::DoNotOptimize(tree);
-    state.SetComplexityN(tree.size());
-  }
-
-  // Assuming that a uniform distribution of random values inserted into a
-  // finger tree creates a relatively balanced tree.
-  //
-  // Popping from a relatively balanced tree gives a reliable average-case
-  // performance benchmark.
-  auto pop_avg(benchmark::State& state) -> void {
-    auto tree = FT();
-    for (uint i = 0; i < state.range(0); i++) {
-      auto v = std::rand();
-      tree.insert(v, v);
-    }
-
-    for (auto _ : state) {
-      auto copy = tree;
-      copy.pop(Dir::Right);
-    }
-
-    benchmark::DoNotOptimize(tree);
-    state.SetComplexityN(tree.size());
-  }
-
   // The worst-case performance of concat is dependent on the packing required
   // on the inside of the new tree.
   //
@@ -179,8 +127,6 @@ namespace benchmarks::finger_tree {
     benchmark::DoNotOptimize(right);
     state.SetComplexityN(left.size());
   }
-
-  // TODO: order values in a map and push them alternatingly to create a dense tree
 
   // Assuming that a uniform distribution of random values inserted into a
   // finger tree creates a relatively balanced tree, the median value must be in

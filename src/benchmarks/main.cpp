@@ -5,51 +5,68 @@
 #include <benchmark/benchmark.h>
 
 BENCHMARK(benchmarks::qmap::get)
-  ->Range(2 << 10, 2 << 16)
+  ->RangeMultiplier(2)
+  ->Range(2 << 10, 2 << 18)
   ->Complexity(benchmark::oAuto);
 
 BENCHMARK(benchmarks::qmap::insert_unique)
-  ->Range(2 << 10, 2 << 16)
+  ->RangeMultiplier(2)
+  ->Range(2 << 10, 2 << 18)
   ->Complexity(benchmark::oAuto);
 
 BENCHMARK(benchmarks::qmap::insert_shared)
-  ->Range(2 << 10, 2 << 16)
+  ->RangeMultiplier(2)
+  ->Range(2 << 10, 2 << 18)
   ->Complexity(benchmark::oAuto);
 
 BENCHMARK(benchmarks::b_tree::get)
-  ->Range(2 << 10, 2 << 16)
+  ->RangeMultiplier(2)
+  ->Range(2 << 10, 2 << 18)
   ->Complexity(benchmark::oAuto);
 
 BENCHMARK(benchmarks::b_tree::insert)
-  ->Range(2 << 10, 2 << 16)
+  ->RangeMultiplier(2)
+  ->Range(2 << 10, 2 << 18)
   ->Complexity(benchmark::oAuto);
 
 BENCHMARK(benchmarks::finger_tree::get)
-  ->Range(2 << 10, 2 << 16)
+  ->RangeMultiplier(2)
+  ->Range(2 << 10, 2 << 18)
   ->Complexity(benchmark::oAuto);
 
+// NOTE: values required to provoke the worst case
 BENCHMARK(benchmarks::finger_tree::push_worst)
-  ->Range(2 << 10, 2 << 16)
+  ->Arg(1820)
+  ->Arg(5465)
+  ->Arg(16400)
+  ->Arg(49205)
+  ->Arg(147620)
+  ->Arg(442865)
   ->Complexity(benchmark::oAuto);
 
 BENCHMARK(benchmarks::finger_tree::push_avg)
-  ->Range(2 << 10, 2 << 16)
+  ->RangeMultiplier(2)
+  ->Range(2 << 10, 2 << 18)
   ->Complexity(benchmark::oAuto);
 
-BENCHMARK(benchmarks::finger_tree::pop_worst)
-  ->Range(2 << 10, 2 << 16)
-  ->Complexity(benchmark::oAuto);
-
-BENCHMARK(benchmarks::finger_tree::pop_avg)
-  ->Range(2 << 10, 2 << 16)
-  ->Complexity(benchmark::oAuto);
-
+// NOTE: required for easy summation in thesis
 BENCHMARK(benchmarks::finger_tree::concat)
-  ->Range(2 << 10, 2 << 16)
+  ->Arg(1820)
+  ->Arg(5465)
+  ->Arg(16400)
+  ->Arg(49205)
+  ->Arg(147620)
+  ->Arg(442865)
   ->Complexity(benchmark::oAuto);
 
+// NOTE: see above
 BENCHMARK(benchmarks::finger_tree::split)
-  ->Range(2 << 10, 2 << 16)
+  ->Arg(1820)
+  ->Arg(5465)
+  ->Arg(16400)
+  ->Arg(49205)
+  ->Arg(147620)
+  ->Arg(442865)
   ->Complexity(benchmark::oAuto);
 
 BENCHMARK_MAIN();

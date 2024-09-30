@@ -31,7 +31,9 @@ namespace benchmarks::b_tree {
     }
 
     for (auto _ : state) {
-      tree = tree.insert(std::rand(), 0);
+      tree.insert(std::rand(), 0);
+      benchmark::DoNotOptimize(tree);
+      benchmark::ClobberMemory();
     }
 
     benchmark::DoNotOptimize(tree);
