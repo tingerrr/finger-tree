@@ -1,0 +1,459 @@
+bib:acr-14:
+  type: article
+  title: Theory and Practice of Chunked Sequences
+  author:
+    - Acar, Umut A.
+    - Charguéraud, Arthur
+    - Rainey, Mike
+  page-range: 25-36
+  volume: 8737
+  serial:
+    doi: 10.1007/978-3-662-44777-2_3
+    isbn: 978-3-662-44777-2
+  url:
+    value: https://link.springer.com/chapter/10.1007/978-3-662-44777-2_3
+    date: 2024-04-08
+  parent:
+    type: proceedings
+    title: Algorithms - ESA 2014
+    subtitle: 22th Annual European Symposium, Wrocław, Poland, September 8-10, 2014. Proceedings
+    editor:
+      - Schulz, Andreas S.
+      - Wagner, Dorothea
+    edition: 1
+    date: 2014-08-16
+    url:
+      value: https://link.springer.com/book/10.1007/978-3-662-44777-2
+      date: 2024-04-08
+    serial:
+      isbn: 978-3-662-44777-2
+    publisher: Springer
+    location: Berlin, Heidelberg
+    parent:
+      - type: conference
+        title: Annual European Symposium
+        # 2014-09-08 - 2014-09-10
+        date: 2014-09
+        location: Wrocław, Poland
+      - type: anthology
+        title: Theoretical Computer Science and General Issues
+        serial:
+          issn: 2512-2010
+        parent:
+          type: anthology
+          title: Lecture Notes in Computer Science
+          serial:
+            issn: 0302-9743
+            e-issn: 1611-3349
+
+# TODO: location and date
+bib:clrs-09:
+  type: book
+  title: Introduction to Algorithms
+  author:
+    - Cormen, Thomas H.
+    - Leiserson, Charles E.
+    - Rivest, Ronald L.
+    - Stein, Clifford
+  edition: 3
+  date: 2009
+  publisher: MIT Press & McGraw-Hill
+    # see: https://github.com/typst/hayagriva/issues/151
+    # - MIT Press
+    # - McGraw-Hill
+  serial:
+    isbn: 0-262-03384-4
+
+bib:kt-96:
+  type: article
+  title: Purely Functional Representations of Catenable Sorted Lists
+  author:
+    - Kaplan, Haim
+    - Tarjan, Robert Endre
+  page-range: 202-211
+  serial:
+    doi: 10.1145/237814.237865
+  parent:
+    type: proceedings
+    title: "STOC '96: Proceedings of the twenty-eighth annual ACM symposium on Theory of Computing"
+    date: 1996-06-01
+    publisher:
+      value: Association for Computing Machinery
+      short: ACM
+    location: New York, NY, United States
+    serial:
+      isbn: 978-0-89791-785-8
+    parent:
+      type: conference
+      title: 'STOC96: ACM Symposium on Theory of Computing'
+      # 1996-05-22 - 1996-05-24
+      date: 1996-05
+      location: Philadelphia, Pennsylvania, United States
+
+bib:brsu-15:
+  type: article
+  title: 'RRB Vector: A Practical General Purpose Immutable Sequence'
+  author:
+    - Bagwell, Philip Sidney
+    - Rompf, Tiark
+    - Stucki, Nicolas
+    - Ureche, Vlad
+  page-range: 342-354
+  serial:
+    doi: 10.1145/2784731.2784739
+  parent:
+    type: proceedings
+    title: 'ICFP 2015: Proceedings of the 20th ACM SIGPLAN International Conference on Functional Programming'
+    date: 2015-08-29
+    publisher:
+      value: Association for Computing Machinery
+      short: ACM
+    location: New York, NY, United States
+    serial:
+      isbn: 978-1-4503-3669-7
+    parent:
+      type: conference
+      title: "ICFP'15: 20th ACM SIGPLAN International Conference on Functional Programming"
+      # 2015-08-31 - 2015-9-02
+      date: 2015-08
+      location: Vancouver, BC, Canada
+
+bib:stu-15:
+  type: thesis
+  title: Turning Relaxed Radix Balanced Vector from Theory into Practice for Scala Collections
+  author: Stucki, Nicolas
+  date: 2015
+  url:
+    value: https://api.semanticscholar.org/CorpusID:60518521
+    date: 2024-04-23
+  organization:
+    value: École polytechnique fédérale de Luasanne
+    short: EPFL
+  location: Écublens, Canton of Vaud, Switzerland
+  serial:
+    s2cid: 6881581
+
+bib:br-11:
+  type: article
+  title: 'RRB-Trees: Efficient Immutable Vectors'
+  author:
+    - Bagwell, Philip Sidney
+    - Rompf, Tiark
+  date: 2011
+  url:
+    value: https://api.semanticscholar.org/CorpusID:15763144
+    date: 2024-04-23
+  serial:
+    s2cid: 6881581
+
+bib:hp-06:
+  type: article
+  title: 'Finger trees: a simple general-purpose data structure'
+  author:
+    - Hinze, Ralf
+    - Paterson, Ross
+  page-range: 197-217
+  url:
+    value: https://dl.acm.org/doi/10.1017/S0956796805005769
+    date: 2024-05-14
+  serial:
+    doi: 10.1017/S0956796805005769
+    s2cid: 6881581
+  parent:
+    type: periodical
+    title: Journal of Functional Programming
+    volume: 16
+    issue: 2
+    date: 2006-03-01
+
+# NOTE: yeah, I'm not paying 200 swiss francs for one citation
+bib:iso-cpp-20:
+  type: manuscript
+  title: Working Draft, Standard for Programming Language C++
+  author: JTC1/SC22/WG21 - The C++ Standards Committee - ISOCPP
+  organization:
+    value: International Organization for Standardization - International Electrotechnical Commission
+    short: ISO/IEC
+  edition: 6
+  date: 2020-01-14
+  serial:
+    iso-iec: 14882:2020
+    serial: N4849
+  url:
+    value: https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4849.pdf
+    date: 2024-04-23
+
+bib:bm-70:
+  type: article
+  title: Organization and maintenance of large ordered indices
+  author:
+    - Bayer, Rudolf
+    - McCreight, Edward Meyers
+  page-range: 107-141
+  url:
+    value: https://dl.acm.org/doi/10.1145/1734663.1734671
+    date: 2024-05-14
+  serial:
+    doi: 10.1145/1734663.1734671
+  parent:
+    type: proceedings
+    title: "SIGFIDET '70: Proceedings of the 1970 ACM SIGFIDET Workshop on Data Description, Access and Control"
+    publisher:
+      value: Association for Computing Machinery
+      short: ACM
+    location: New York, NY, United States
+    date: 1970-11-15
+    serial:
+      isbn: 978-1-4503-7941-0
+    parent:
+      type: conference
+      title: 1970 ACM SICFIDET Workshop on Data Description and Access
+      # 1970-11-15 - 1970-11-16
+      date: 1970-11
+      location: Houston, Texas, United States
+
+bib:bay-71:
+  type: article
+  title: Binary B-trees for virtual memory
+  author:
+    - Bayer, Rudolf
+  page-range: 219-235
+  url:
+    value: https://dl.acm.org/doi/abs/10.1145/1734714.1734731
+    date: 2024-05-14
+  serial:
+    doi: 10.1145/1734714.1734731
+  parent:
+    type: proceedings
+    title: "SIGFIDET '71: Proceedings of the 1971 ACM SIGFIDET Workshop on Data Description, Access and Control"
+    date: 1971-11
+    publisher:
+      value: Association for Computing Machinery
+      short: ACM
+    location: New York, NY, United States
+    serial:
+      isbn: 978-1-4503-7300-5
+    parent:
+      type: conference
+      title: 1971 ACM SICFIDET Workshop on Data Description and Access,
+      # 1971-11-11 - 1971-11-12
+      date: 1971-11
+      location: San Diego, California, United States
+
+bib:sip-06:
+  type: book
+  title: Introduction to the theory of computation
+  author:
+    - Sipser, Michael
+  date: 2006
+  edition: 2
+  publisher: Thomson Course Technology
+  serial:
+    isbn: 978-0-534-95097-2
+
+bib:tar-85:
+  type: article
+  title: Amortized Computational Complexity
+  author:
+    - Tarjan, Robert Endre
+  pages-range: 306-318
+  url:
+    value: https://dl.acm.org/doi/10.1137/0606031
+    date: 2024-05-17
+  serial:
+    doi: 10.1137/0606031
+    issn: 0196-5212
+    s2cid: 120846494
+  parent:
+    type: periodical
+    title: SIAM J. Algebraic Discrete Methods
+    publisher:
+      value: Society for Industrial and Applied Mathematics
+      short: SIAM
+    volume: 6
+    issue: 2
+    date: 1985-04-1
+    location: 3600 University City Science Center Philadelphia, PA, United States
+
+bib:lan-09:
+  type: manuscript
+  title: Handbuch der Lehre von der Verteilung der Primzahlen
+  author:
+    - Landau, Edmund
+  date: 1909
+  publisher: B.G. Teubner
+  location: Leipzig, Saxony, Germany
+  volume: 1
+
+bib:bac-94:
+  type: manuscript
+  title: Die Analytische Zahlentheorie
+  author:
+    - Bachmann, Paul
+  date: 1894
+  publisher: B. G. Teubner
+  part: 2
+  location: Leipzig, Saxony, Germany
+
+bib:knu-76:
+  type: article
+  title: Big Omicron and big Omega and big Theta
+  author:
+    - Knuth, Donald Ervin
+  page-range: 18-24
+  serial:
+    doi: 10.1145/1008328.1008329
+    s2cid: 523024
+  url:
+    value: https://web.archive.org/web/20220314030120/https://www.phil.uu.nl/datastructuren/10-11/knuth_big_omicron.pdf
+    date: 2024-05-17
+  parent:
+    type: periodical
+    title: ACM SIGACT News
+    volume: 8
+    issue: 2
+    date: 1976-04-01
+    publisher:
+      value: Association for Computing Machinery
+      short: ACM
+
+bib:sch-05:
+  type: book
+  title: Softwareentwicklung eingebetteter Systeme
+  subtitle: Grundlagen, Modellierung, Qualitätssicherung
+  author:
+    - Scholz, Peter
+  date: 2005-04-13
+  edition: 1
+  url:
+    value: https://link.springer.com/chapter/10.1007/3-540-27522-3_3
+    date: 2023-05-22
+  publisher: Springer
+  location: Berlin, Heidelberg
+  serial:
+    doi: 10.1007/3-540-27522-3
+    isbn: 978-3-540-23405-0
+    issn: 1439-5428
+    e-issn: 2522-0667
+
+bib:lo-11:
+  type: book
+  title: Real-Time Systems Design and Analysis
+  subtitle: Tools for the Practitioner
+  author:
+    - Laplante, Phillip A.
+    - Ovaska, Seppo J.
+  date: 2011-11
+  edition: 4
+  publisher: Wiley & IEEE Press
+  serial:
+    isbn: 978-1-118-13660-7
+
+bib:knu-97a:
+  type: book
+  title: "The Art of Computer Programming Volume 1: Fundamental Algorithms"
+  author:
+    - Knuth, Donald Ervin
+  date: 1997
+  volume: 1
+  edition: 3
+  publisher: Addison-Wesley
+  location: Reading, Massachusetts, USA
+  serial:
+    isbn: 978-0-201-89683-1
+
+bib:knu-97b:
+  type: book
+  title: "The Art of Computer Programming Volume 2: Seminumerical Algorithms"
+  author:
+    - Knuth, Donald Ervin
+  date: 1998
+  volume: 2
+  edition: 2
+  publisher: Addison-Wesley
+  location: Reading, Massachusetts, USA
+  serial:
+    isbn: 978-0-201-89684-8
+
+bib:knu-98:
+  type: book
+  title: "The Art of Computer Programming Volume 3: Sorting and Searching"
+  author:
+    - Knuth, Donald Ervin
+  date: 1998
+  volume: 3
+  edition: 2
+  publisher: Addison-Wesley
+  location: Reading, Massachusetts, USA
+  serial:
+    isbn: 978-0-201-89685-5
+
+bib:oka-98:
+  type: book
+  title: Purely Functional Data Structures
+  author:
+    - Okasaki, Chris
+  date: 1998
+  publisher: Cambridge University Press
+  location: The Pitt Building, Trumpington Street, Cambridge, United Kingdom
+  serial:
+    isbn: 521-63124-6
+    doi: 10.1017/CBO9780511530104
+
+bib:fk-03:
+  type: article
+  title: Making data structures confluently persistent
+  author:
+    - Fiat, Amos
+    - Kaplan, Haim
+  parent:
+    type: periodical
+    title: Journal of Algorithms
+    volume: 48
+    number: 1
+    pages: 16-58
+    year: 2003
+    url:
+      value: https://www.sciencedirect.com/science/article/pii/S0196677403000440
+      date: 2024-08-28
+    serial:
+      issn: 0196-6774
+      doi: 10.1016/S0196-6774(03)00044-0
+    parent:
+      type: conference
+      title: Twelfth Annual ACM-SIAM Symposium on Discrete Algorithms
+
+bib:bm-98:
+  type: article
+  title: Nested datatypes
+  author:
+    - Bird, Richard
+    - Meertens, Lambert
+  page-range: 52-67
+  date: 1998
+  volume: 1422
+  url:
+    value: https://link.springer.com/chapter/10.1007/BFb0054285
+    date: 2024-10-08
+  serial:
+    doi: 10.1007/BFb0054285
+  parent:
+    type: proceedings
+    title: Mathematics of Program Construction
+    editor: Jeuring, Johan
+    publisher: Springer Berlin Heidelberg
+    address: Berlin, Heidelberg
+    serial:
+      isbn: 978-3-540-69345-1
+      doi: 10.1007/BFb0054279
+    parent:
+      - type: conference
+        title: 4th International Conference, MPC'98
+        location: Marstrand, Sweden
+        # 1998-06-15 - 1998-06-17
+        date: 1998-06-15
+      - type: anthology
+        title: Lecture Notes in Computer Science
+        serial:
+          issn: 0302-9743
+          e-issn: 1611-3349

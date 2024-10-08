@@ -1,0 +1,127 @@
+%YAML 1.2
+---
+# See http://www.sublimetext.com/docs/3/syntax.html
+name: T4gl
+file_extensions: [t4gl, t4ro]
+scope: source.t4gl
+contexts:
+  main:
+    - match: '"'
+      scope: string.quoted.double.begin.t4gl
+      push: double_quoted_string
+    - match: '//'
+      scope: comment.line.double-slash.begin.t4gl
+      push: line_comment
+    - match: '/\*'
+      scope: comment.block.start.t4gl
+      push: block_comment
+    - match: '\['
+      scope: punctuation.definition.brackets.begin.t4gl
+      push: t4gl_meta_brackets
+    - match: '\{'
+      scope: punctuation.definition.block.begin.t4gl
+      push: t4gl_meta_block
+    - match: '\('
+      scope: punctuation.definition.group.begin.t4gl
+      push: t4gl_meta_group
+    - match: '\}'
+      scope: invalid.illegal.block.end.t4gl
+    - match: '\)'
+      scope: invalid.illegal.block.end.t4gl
+    - match: '^[ ]+[\n\r]{1,2}'
+      scope: invalid.illegal.white-spaces
+    - match: '[ \t]+(?=[\n\r]{1,2})'
+      scope: invalid.illegal.line-brakes
+    - match: '\b(readable|writable|translatable|reference|composed|synchronized)\b'
+      scope: storage.modifier.t4gl
+    - match: '\b(Boolean|Double|Integer|Object|String|Time|Trigger|void|Complex|Variable|Scope|Method|File|Directory|Type)\b'
+      scope: storage.type.t4gl
+    - match: '\b(continue|break|in|out|onTimeout|else|return|use|onTimeout|onFail|import)\b'
+      scope: keyword.control.simple.t4gl
+    - match: '\b(assert|forEach|if|timeout|while|waitUntil|on|after|onError)\b'
+      scope: keyword.control.complex.t4gl
+      push: keyword_control_complex
+    - match: '(^global(:)?$|^class(:)?$)'
+      scope: keyword.other.t4gl
+    - match: '\b(stateMachine|virtual|parallel)\b'
+      scope: storage.modifier.t4gl
+    - match: '\b(state (?=[0-9a-zA-Z_-]+:)|default(?=:))'
+      scope: keyword.other.t4gl
+    - match: '(?=^| |\t|)@'
+      scope: punctuation.definition.annotation.start.t4gl
+      push: t4gl_annotation
+    - include: t4gl_language_constants
+    - match: '\b([a-zA-Z0-9_]+)(?=[\(])\b'
+      scope: entity.name.function.t4gl
+    - match: '\b([a-zA-Z0-9_]+)(?=[\.])'
+      scope: support.type.t4gl
+
+  keyword_control_complex:
+    - match: '\('
+      scope: punctuation.definition.group.begin.t4gl
+      set: t4gl_meta_group
+
+  t4gl_meta_brackets:
+    - meta_scope: meta.brackets.t4gl
+    - match: '\]'
+      scope: punctuation.definition.brackets.end.t4gl
+      pop: true
+    - include: main
+
+  t4gl_meta_group:
+    - meta_scope: meta.group.t4gl
+    - match: '\)'
+      scope: punctuation.definition.group.end.t4gl
+      pop: true
+    - include: main
+
+  t4gl_meta_block:
+    - meta_scope: meta.block.t4gl
+    - match: '\}'
+      scope: punctuation.definition.block.t4gl
+      pop: true
+    - include: main
+
+  t4gl_language_constants:
+    - match: '\b(this|super)\b'
+      scope: variable.language.t4gl
+    - match: '\b(null|[-]?Infinity|[-]?Inf|true|false|NaN|[-]?PI|[-]?E|currentMicroSeconds|currentMilliSeconds|currentCentiSeconds|currentDeciSeconds|currentSeconds|MaximumTime|MinimumTime|MaximumInteger|MinimumInteger)\b'
+      scope: constant.language.t4gl
+    - match: '\b((\d{0,2}:){0,2}\d{1,2}(\.\d+)?)\b'
+      scope: constant.numeric.time.t4gl
+    - match: '\b[0-9]+\.[0-9]+\b'
+      scope: constant.numeric.double.t4gl
+    - match: '\b[0-9]+\b'
+      scope: constant.numeric.integer.t4gl
+    - match: '(<-|\.|!)'
+      scope: keyword.operator.t4gl
+
+  t4gl_annotation:
+    - meta_scope: meta.annotation.t4gl
+    - match: '"'
+      scope: string.quoted.double.begin.t4gl
+      push: double_quoted_string
+    - match: '\n'
+      scope: punctuation.definition.annotation.end.t4gl
+      pop: true
+    - include: t4gl_language_constants
+
+  double_quoted_string:
+    - meta_scope: string.quoted.double.t4gl
+    - match: \\.
+      scope: constant.character.escape.t4gl
+    - match: '"'
+      scope: string.quoted.double.end.t4gl
+      pop: true
+
+  line_comment:
+    - meta_scope: comment.line.double-slash.t4gl
+    - match: '$'
+      scope: comment.line.double-slash.end.t4gl
+      pop: true
+
+  block_comment:
+    - meta_scope: comment.block.t4gl
+    - match: '\*/'
+      scope: comment.block.end.t4gl
+      pop: true
