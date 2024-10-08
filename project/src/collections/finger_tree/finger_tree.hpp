@@ -1,5 +1,25 @@
 #pragma once
 
+// main definition of public FingerTree API
+
+// some notable changes
+// - the key type has no identity element, this way we avoid having to reserve a
+//   sentinel value the K type which users aren't allowed to use this is evident
+//   in more specialized implementations involving the key lookup and that
+//   finger trees don't have keys in the empty variant
+// - most types have no virtual methods
+//   - some oeprations are non sensical, you can't split empty trees, nor can
+//     you return the key of an empty tree if keys dont' have an identity
+//     element
+//   - for some operations its infeasible, you can't pop from single tree
+//     without changing its type to empty, but `this` cannot be used to write
+//     the new variant as it is a differnt type
+//   this is why all relevant operations are implemented on this wrapper
+//   type itself, they need to be able to change the _repr field if a variant
+//   transitions to another. the resulting wrapper type, which also manages the
+//   persistence, was also used for the other types, even if they did not
+//   strictly need it
+
 #include "src/utils/uninit_exception.hpp"
 
 #include "src/collections/finger_tree/_prelude.hpp"
@@ -29,12 +49,19 @@ namespace collections::finger_tree {
     public:
       FingerTree();
 
+      // construct a finger tree with the given variant
       FingerTree(FingerTreeEmpty<K, V> const& empty);
       FingerTree(FingerTreeSingle<K, V> const& single);
       FingerTree(FingerTreeDeep<K, V> const& deep);
 
     private:
+      // construct a finger tree from the given nodes at this layer
+      // this is a shorthand for appending to an empty finger tree
       static auto from_nodes(std::span<Node<K, V> const> nodes) -> FingerTree<K, V>;
+
+      // create a new deep finger tree with the given fields, but ensure that
+      // the digits are not empty by underflowing from the middle tree
+      // this is necessary for various intermediate states in split or concat
       static auto deep_smart(
         std::span<Node<K, V> const> left,
         FingerTree<K, V> const& middle,
@@ -43,29 +70,55 @@ namespace collections::finger_tree {
 
     // accessors
     public:
+      // return the number of key value pairs in this tree
       auto size() const -> uint;
 
     // methods
     public:
+      // return the value that this key points to, or nullptr if this key
+      // doesn't eixst
       auto get(K const& key) const -> V const*;
 
+      // push a key value pair to the given side
+      // this is public for demonstration purposes and should not actually be
+      // exposed as the key ordering constraint can easily be broken
       auto push(Direction dir, K const& key, V const& val) -> void;
+
+      // pop a key value pair from the given side
       auto pop(Direction dir) -> std::optional<std::pair<K, V>>;
 
+      // insert a key value pair into the tree
+      // if this key already existed in the tree its old value is returned and
+      // swaped with the given parameter
       auto insert(K const& key, V const& val) -> std::optional<V>;
+
+      // remove a key value pair from the tree and retunr it's value if it
+      // existed
       auto remove(K const& key) -> std::optional<V>;
 
+      // split this tree at the given key
+      // returning a left anr right tree, as well as the value if this key
+      // existed
+      // the left/right trees contain all key value pairs which are
+      // less than/greater than the given parameter respectively
       auto split(
         K const& key
       ) const -> std::tuple<FingerTree<K, V>, std::optional<V>, FingerTree<K, V>>;
 
     private:
+      // internal definition of push which cna be used recursively
       auto push_node(Direction dir, Node<K, V> const& node) -> void;
+
+      // internal definition of pop which cna be used recursively
       auto pop_node(Direction dir) -> std::optional<Node<K, V>>;
 
+      // internal definition of append which can be used recursively
       auto append_nodes(Direction dir, std::span<Node<K, V> const> nodes) -> void;
+
+      // internal definition of take which can be used recursively
       auto take_nodes(Direction dir, uint count) -> std::vector<Node<K, V>>;
 
+      // internal definition of split which can be used recursively
       auto split_node(K const& key) const -> std::tuple<
         FingerTree<K, V>,
         std::optional<Node<K, V>>,
@@ -74,12 +127,15 @@ namespace collections::finger_tree {
 
     // functions
     public:
+      // concat two trees
+      // likewise to push, this is only public for demonstration purposes
       static auto concat(
         FingerTree<K, V> const& left,
         FingerTree<K, V> const& right
       ) -> FingerTree<K, V>;
 
     private:
+      // internal definition of concat which can be used recursively
       static auto concat_inner(
         FingerTree<K, V> const& left,
         std::vector<Node<K, V>> const& middle,
@@ -88,6 +144,12 @@ namespace collections::finger_tree {
 
     // helpers
     public:
+      // initially the code was less handrolled and didn't contain an invalid
+      // nullptr state, but, in true C++ fashion, trying to avoid invalid states
+      // makes you constantly bump into various API issues with constructors and
+      // C++'s horrible standard library, so I gave up and embraced the nullptr
+      // default state
+
       auto is_uninit() const -> bool { return this->_repr == nullptr; }
       auto is_empty() const -> bool { return this->_kind == Kind::Empty; }
       auto is_single() const -> bool { return this->_kind == Kind::Single; }
@@ -129,12 +191,23 @@ namespace collections::finger_tree {
         }
       }
 
+      // ensure we're initalized (not nullptr)
       auto assert_init() const -> void;
+
+      // ensure we're operating on a _repr instance which has no other
+      // referents
+      //
+      // the invisible persistnce section explains why this is tricky, hence why
+      // this currently always defensively copies the inner instance (not the
+      // shared ptr, but the inner variant object itself)
       auto ensure_unique() -> void;
+
+      // set the repr field to the given variant
       auto set(FingerTreeEmpty<K, V> empty) -> void;
       auto set(FingerTreeSingle<K, V> single) -> void;
       auto set(FingerTreeDeep<K, V> deep) -> void;
 
+      // print a debug representation of the tree with the given indent
       auto show(std::ostream& os, uint indent) const -> std::ostream&;
 
     private:
@@ -175,9 +248,12 @@ namespace collections::finger_tree {
     return tree;
   }
 
-  // deep_L and deep_R special case
-  // - may contain undersized sides which are filled by underflow
-  // - retains the depth of the passed in nodes
+  // this is the equivalent of the smart constructors mentioned in the haskell
+  // paper called deep_L and deep_R, as a single constructor helper
+  // it fills the left and right digits by poping from the middle tree
+  //
+  // unlike the haskell usage of the deep constructors, this is not lazy with
+  // respect to underflow
   template<typename K, typename V>
   auto FingerTree<K, V>::deep_smart(
     std::span<Node<K, V> const> left,
@@ -642,6 +718,7 @@ namespace collections::finger_tree {
 
   template<typename K, typename V>
   auto FingerTree<K, V>::assert_init() const -> void {
+    // make sure we're not working with a moved from instance
     if (this->is_uninit()) {
       throw UninitException("FingerTree is uninitialized");
     }
@@ -651,8 +728,8 @@ namespace collections::finger_tree {
   auto FingerTree<K, V>::ensure_unique() -> void {
     this->assert_init();
 
-    // NOTE: no pointers or references to a FingerTree my be sent to another
-    // thread, only values of FingerTree, therefor no copy may be done between
+    // NOTE: no pointers or references to a FingerTree may be sent to another
+    // thread, only values of FingerTree, therefore no copy may be done between
     // this check and subsequent writes
     // if (this->_repr.use_count() == 1) {
     //   return;

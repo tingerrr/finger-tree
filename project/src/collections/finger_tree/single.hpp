@@ -20,11 +20,13 @@ namespace collections::finger_tree {
 
     // helpers
     protected:
+      // print a debug representation of the tree with the given indent
       virtual auto show(std::ostream& os, uint indent) const -> std::ostream& override;
 
     private:
       Node<K, V> _node;
 
+      // give the wrapper type access to this variant's internals
       friend class FingerTree<K, V>;
   };
 

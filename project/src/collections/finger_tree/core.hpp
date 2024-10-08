@@ -1,5 +1,7 @@
 #pragma once
 
+// forward delarations
+
 namespace collections::finger_tree {
   template<typename K, typename V>
   class FingerTreeEmpty;

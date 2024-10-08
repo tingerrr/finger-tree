@@ -1,5 +1,8 @@
 #pragma once
 
+// the empty variant of a finger tree, included for completeness and easier
+// comparisong to the haskell definition
+
 #include "src/collections/finger_tree/core.hpp"
 
 #include <ostream>
@@ -14,9 +17,11 @@ namespace collections::finger_tree {
 
     // helpers
     protected:
+      // print a debug representation of the tree with the given indent
       virtual auto show(std::ostream& os, uint indent) const -> std::ostream& override;
 
     private:
+      // for completeness lol
       friend class FingerTree<K, V>;
   };
 

@@ -1,5 +1,7 @@
 #pragma once
 
+// the wrapper for managing node persistence and the public interface
+
 #include "src/utils/uninit_exception.hpp"
 #include "src/utils/variant_exception.hpp"
 
@@ -21,10 +23,16 @@ namespace collections::finger_tree::node {
     public:
       Node() = delete;
 
+      // create a node for the given variant
       Node(NodeDeep<K, V> const& deep);
       Node(NodeLeaf<K, V> const& leaf);
 
+      // create a leaf node for the given key and value
       Node(K const& key, V const& val);
+
+      // create a 2- or 3-node from the given nodes
+      //
+      // these nods must have the same depth
       Node(Node<K, V> const& a, Node<K, V> const& b);
       Node(Node<K, V> const& a, Node<K, V> const& b, Node<K, V> const& c);
 
@@ -36,10 +44,13 @@ namespace collections::finger_tree::node {
 
     // methods
     public:
+      // return a pointer to the value this key refers to, or a nullptr if the
+      // key didn't exist
       auto get(K const& key) const -> V const*;
 
     // helpers
     public:
+      // pack nodes in the given span into new deep nodes
       static auto pack_nodes(
         std::span<Node<K, V> const> nodes
       ) -> std::vector<Node<K, V>>;
@@ -67,8 +78,10 @@ namespace collections::finger_tree::node {
         }
       }
 
+      // ensure we're initalized (not nullptr)
       auto assert_init() const -> void;
 
+      // print a debug representation of the node with the given indent
       auto show(std::ostream& os, uint indent) const -> std::ostream&;
 
     private:

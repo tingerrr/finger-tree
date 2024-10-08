@@ -1,5 +1,9 @@
 #pragma once
 
+// the only digit variant, this is only used for the separation for persistence
+// digits allow 0 and more than 4 elements to avoid excessive copying in
+// over/underflow scenarios
+
 #include "src/collections/finger_tree/core.hpp"
 #include "src/collections/finger_tree/digit/_prelude.hpp"
 
@@ -15,6 +19,7 @@ namespace collections::finger_tree::digit {
     public:
       DigitsBase() = default;
 
+      // create various digits depending on the number of nodes inside them
       DigitsBase(Node<K, V> const& a);
       DigitsBase(Node<K, V> const& a, Node<K, V> const& b);
       DigitsBase(Node<K, V> const& a, Node<K, V> const& b, Node<K, V> const& c);
@@ -38,20 +43,37 @@ namespace collections::finger_tree::digit {
 
     // methods
     public:
+      // return a pointer to the value this key refers to, or a nullptr if the
+      // key didn't exist
       auto get(K const& key) const -> V const*;
 
+      // add a node at the given side
       auto push(Direction dir, Node<K, V> const& node) -> void;
+
+      // pop a node from the given side
+      // undefined behavior if called on empty digits
       auto pop(Direction dir) -> void;
 
+      // unpack a deep node and add its children
+      // this is used for underflow
       auto unpack(Direction dir, NodeDeep<K, V> const& node) -> void;
+
+      // pack nodes from the given side and return them
+      // this is used for overflow
+      // undefined behavior if called on less than 3 digits
       auto pack(Direction dir) -> NodeDeep<K, V>;
 
     // helpers
     public:
+      // ensure we're within valid bounds
       auto assert_invariant() const -> void;
+
+      // print a debug representation of the tree with the given indent
       auto show(std::ostream& os, uint indent) const -> std::ostream&;
 
     private:
+      // we cache the size of this directly, the key can be accessed using the
+      // last node
       uint _size;
       std::vector<Node<K, V>> _digits;
   };

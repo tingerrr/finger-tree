@@ -20,6 +20,7 @@ namespace collections::finger_tree::digit {
     public:
       Digits();
 
+      // create various digits depending on the number of nodes inside them
       Digits(Node<K, V> const& a);
       Digits(Node<K, V> const& a, Node<K, V> const& b);
       Digits(Node<K, V> const& a, Node<K, V> const& b, Node<K, V> const& c);
@@ -31,6 +32,8 @@ namespace collections::finger_tree::digit {
       );
 
     public:
+      // creates digits from the given nodes, throwing an exception if there
+      // aren't enough to too many
       static auto from_nodes(std::span<Node<K, V> const> nodes) -> Digits<K, V>;
 
     // accessors
@@ -44,13 +47,30 @@ namespace collections::finger_tree::digit {
 
     // methods
     public:
+      // return a pointer to the value this key refers to, or a nullptr if the
+      // key didn't exist
       auto get(K const& key) const -> V const*;
+
+      // add a node at the given side
       auto push(Direction dir, Node<K, V> const& node) -> void;
+
+      // pop a node from the given side
+      // undefined behavior if called on empty digits
       auto pop(Direction dir) -> void;
 
+      // unpack a deep node and add its children
+      // this is used for underflow
       auto unpack(Direction dir, NodeDeep<K, V> const& node) -> void;
+
+      // pack nodes from the given side and return them
+      // this is used for overflow
+      // undefined behavior if called on less than 3 digits
       auto pack(Direction dir) -> NodeDeep<K, V>;
 
+      // split the digit similar to a finger tree, but only do a shallow split
+      //
+      // because this may return empty spans and is used to create new trees,
+      // the deep_smart construtor helper is needed for finger trees
       auto split(K const& key) const -> std::tuple<
         std::span<Node<K, V> const>,
         std::optional<Node<K, V>>,
@@ -61,13 +81,21 @@ namespace collections::finger_tree::digit {
     public:
       auto is_uninit() const -> bool { return this->_repr == nullptr; }
 
+      // ensure we're initalized (not nullptr)
       auto assert_init() const -> void;
+
+      // ensure we're operating on a _repr instance which has no other
+      // referents
+      //
+      // the invisible persistnce section explains why this is tricky, hence why
+      // this currently always defensively copies the inner instance (not the
+      // shared ptr, but the inner variant object itself)
       auto ensure_unique() -> void;
 
+      // print a debug representation of the digits with the given indent
       auto show(std::ostream& os, uint indent) const -> std::ostream&;
 
     private:
-      Kind _kind;
       std::shared_ptr<DigitsBase<K, V>> _repr;
   };
 

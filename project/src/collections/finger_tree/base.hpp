@@ -1,5 +1,7 @@
 #pragma once
 
+// the base type of the finger tree variants
+
 #include "src/collections/finger_tree/core.hpp"
 
 #include <ostream>
@@ -14,6 +16,7 @@ namespace collections::finger_tree {
 
     // helpers
     public:
+      // print a debug representation of the tree with the given indent
       virtual auto show(std::ostream& os, uint indent) const -> std::ostream& = 0;
   };
 

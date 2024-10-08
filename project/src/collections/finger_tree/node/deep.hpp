@@ -1,5 +1,7 @@
 #pragma once
 
+// the internal node varaint, can contain 2 or 3 children
+
 #include "src/collections/finger_tree/node/core.hpp"
 
 #include <optional>
@@ -16,6 +18,9 @@ namespace collections::finger_tree::node {
     public:
       NodeDeep() = delete;
 
+      // create a 2- or 3-node from the given nodes
+      //
+      // these nods must have the same depth
       NodeDeep(Node<K, V> const& a, Node<K, V> const& b);
       NodeDeep(Node<K, V> const& a, Node<K, V> const& b, Node<K, V> const& c);
 
@@ -33,6 +38,10 @@ namespace collections::finger_tree::node {
 
     // methods
     public:
+      // split the node similar to a finger tree, but only do a shallow split
+      //
+      // because this may return empty spans and is used to create new trees,
+      // the deep_smart construtor helper is needed for finger trees
       auto split(K const& key) const -> std::tuple<
         std::span<Node<K, V> const>,
         std::optional<Node<K, V>>,
@@ -41,13 +50,17 @@ namespace collections::finger_tree::node {
 
     // helpers
     protected:
+      // print a debug representation of the node with the given indent
       virtual auto show(std::ostream& os, uint indent) const -> std::ostream& override;
 
     private:
+      // we cache both the key and the size, otherwise we would recurse all the way down the tree
+      // when collecting them on demand
       uint _size;
       K _key;
       std::vector<Node<K, V>> _children;
 
+      // give the wrapper type access to this variant's internals
       friend class Node<K, V>;
   };
 
